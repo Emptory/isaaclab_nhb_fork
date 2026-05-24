@@ -1,0 +1,1 @@
+from .G1_amp_data_cfg import *

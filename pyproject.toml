@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools", "wheel", "toml"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "isaaclab_nhb"
+version = "0.1"
+authors = [{ name = "NanHaibei", email = "371743175@qq.com" }]
+dependencies = [
+    # "requests",
+    # 'importlib-metadata; python_version<"3.8"',
+]
+
+[tool.setuptools]
+# Use explicit package listing to avoid picking up the top-level 'docker' folder
+packages = ["isaaclab_nhb"]
+
+[tool.setuptools.package-data]
+# Include any package data patterns here if needed
+isaaclab_nhb = []
