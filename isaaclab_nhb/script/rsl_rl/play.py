@@ -39,6 +39,12 @@ parser.add_argument(
     help="Use the pre-trained checkpoint from Nucleus.",
 )
 parser.add_argument("--real-time", action="store_true", default=False, help="Run in real-time, if possible.")
+parser.add_argument(
+    "--show_s1_hand_targets",
+    action="store_true",
+    default=False,
+    help="Visualize CoopG1S1 virtual hand target positions in the torso_link frame.",
+)
 
 parser.add_argument("--csv_export", action="store_true", default=False, help="Export data to CSV.")
 parser.add_argument("--amp_stats", action="store_true", default=True, help="Enable AMP data statistics collection and output.")
@@ -113,6 +119,7 @@ from rsl_rl.runners import DistillationRunner, OnPolicyRunner
 import isaacsim.core.utils.stage as stage_utils
 from pxr import UsdGeom
 
+import isaaclab.sim as sim_utils
 from isaaclab.envs import (
     DirectMARLEnv,
     DirectMARLEnvCfg,
@@ -120,8 +127,10 @@ from isaaclab.envs import (
     ManagerBasedRLEnvCfg,
     multi_agent_to_single_agent,
 )
+from isaaclab.markers import VisualizationMarkers, VisualizationMarkersCfg
 from isaaclab.utils.assets import retrieve_file_path
 from isaaclab.utils.dict import print_dict
+from isaaclab.utils.math import quat_apply
 try:
     from isaaclab.utils.pretrained_checkpoint import get_published_pretrained_checkpoint
 except ModuleNotFoundError:
@@ -348,6 +357,38 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
 
     dt = env.unwrapped.step_dt
 
+    s1_hand_target_viz = None
+    if args_cli.show_s1_hand_targets:
+        left_target_viz = VisualizationMarkers(
+            VisualizationMarkersCfg(
+                prim_path="/Visuals/S1LeftHandTarget",
+                markers={
+                    "marker": sim_utils.SphereCfg(
+                        radius=0.06,
+                        visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(1.0, 0.0, 0.0)),
+                    )
+                },
+            )
+        )
+        right_target_viz = VisualizationMarkers(
+            VisualizationMarkersCfg(
+                prim_path="/Visuals/S1RightHandTarget",
+                markers={
+                    "marker": sim_utils.SphereCfg(
+                        radius=0.06,
+                        visual_material=sim_utils.PreviewSurfaceCfg(diffuse_color=(0.0, 0.2, 1.0)),
+                    )
+                },
+            )
+        )
+        s1_hand_target_viz = {
+            "left_viz": left_target_viz,
+            "right_viz": right_target_viz,
+            "left_local": torch.tensor([[0.44, 0.24, 0.03]], device=env.unwrapped.device),
+            "right_local": torch.tensor([[0.44, -0.24, 0.03]], device=env.unwrapped.device),
+        }
+        print("[INFO] Showing S1 hand target markers: red=left target, blue=right target.")
+
     # reset environment
     obs = env.get_observations()
     timestep = 0
@@ -381,6 +422,23 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
             actions, extra_info = policy(obs)
             # env stepping
             obs, _, _, _ = env.step(actions, extra_info)
+
+            if s1_hand_target_viz is not None:
+                robot = env.unwrapped.scene["robot"]
+                torso_id = robot.body_names.index("torso_link")
+                torso_pos_w = robot.data.body_link_pos_w[:, torso_id, :]
+                torso_quat_w = robot.data.body_link_quat_w[:, torso_id, :]
+
+                left_target_w = torso_pos_w + quat_apply(
+                    torso_quat_w,
+                    s1_hand_target_viz["left_local"].expand(torso_pos_w.shape[0], -1),
+                )
+                right_target_w = torso_pos_w + quat_apply(
+                    torso_quat_w,
+                    s1_hand_target_viz["right_local"].expand(torso_pos_w.shape[0], -1),
+                )
+                s1_hand_target_viz["left_viz"].visualize(left_target_w)
+                s1_hand_target_viz["right_viz"].visualize(right_target_w)
         
         # Get and print camera position (skip first few steps to ensure physics is initialized)
         if timestep >= initial_steps:

@@ -19,8 +19,8 @@ HOLD_BOX_SIZE = (0.18, 0.55, 0.16)
 HOLD_BOX_HALF_SIZE = tuple(size * 0.5 for size in HOLD_BOX_SIZE)
 
 HOLD_HAND_TARGET_POS = (
-    (0.39, 0.22, 0.03),
-    (0.39, -0.22, 0.03),
+    (0.44, 0.24, 0.03),
+    (0.44, -0.24, 0.03),
 )
 
 HOLD_ARM_JOINT_POS = {
@@ -59,9 +59,22 @@ class CoopG1S1EventCfg(CoopG1S0EventCfg):
 class CoopG1S1RewardsCfg(CoopG1S0RewardsCfg):
     """S0 locomotion rewards plus carry-pose shaping."""
 
+    torso_height = RewTerm(
+        func=mdp_nhb.body_height_exp,
+        weight=2.0,
+        params={
+            "target_height": 0.82,
+            "asset_cfg": SceneEntityCfg(
+                "robot",
+                body_names="torso_link",
+            ),
+            "lambda_exp": 10.0,
+        },
+    )
+
     arm_target_pose = RewTerm(
         func=mdp_nhb.joint_target_l1,
-        weight=-0.08,
+        weight=-0.02,
         params={
             "asset_cfg": SceneEntityCfg(
                 "robot",
@@ -77,7 +90,7 @@ class CoopG1S1RewardsCfg(CoopG1S0RewardsCfg):
 
     hand_payload_pose = RewTerm(
         func=mdp_nhb.body_body_rel_pos_exp,
-        weight=0.50,
+        weight=1.25,
         params={
             "asset_cfg": SceneEntityCfg(
                 "robot",
@@ -86,13 +99,13 @@ class CoopG1S1RewardsCfg(CoopG1S0RewardsCfg):
             ),
             "reference_asset_cfg": SceneEntityCfg("robot", body_names="torso_link"),
             "target_positions": HOLD_HAND_TARGET_POS,
-            "std": 0.14,
+            "std": 0.10,
         },
     )
 
     upper_body_box_overlap = RewTerm(
         func=mdp_nhb.body_inside_box_penalty,
-        weight=-0.05,
+        weight=-0.10,
         params={
             "asset_cfg": SceneEntityCfg(
                 "robot",
