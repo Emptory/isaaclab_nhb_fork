@@ -114,7 +114,7 @@ args_cli.task = "G1-ElevHist-ECMM-Rough"
 # 使用WebRTC串流
 # args_cli.livestream=2
 
-args_cli.device = "cuda:0"
+# Do not override the CLI device here; pass --device explicitly when launching.
 # args_cli.headless = True
 # args_cli.real_time = True
 # args_cli.video = True

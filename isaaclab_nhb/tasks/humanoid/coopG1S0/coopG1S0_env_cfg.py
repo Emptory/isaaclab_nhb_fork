@@ -178,7 +178,7 @@ class CoopG1S0RewardsCfg:
 
     track_lin_vel_xy = RewTerm(
         func=mdp.track_lin_vel_xy_yaw_frame_exp,
-        weight=2.0,
+        weight=1.0,
         params={
             "command_name": "base_velocity",
             "std": 0.5,
@@ -187,7 +187,7 @@ class CoopG1S0RewardsCfg:
 
     track_ang_vel_z = RewTerm(
         func=mdp.track_ang_vel_z_world_exp,
-        weight=1.0,
+        weight=1.5,
         params={
             "command_name": "base_velocity",
             "std": 0.5,
@@ -261,6 +261,48 @@ class CoopG1S0RewardsCfg:
 
     energy = RewTerm(func=mdp_nhb.energy, weight=-2.0e-5)
 
+    joint_deviation_arms = RewTerm(
+        func=mdp.joint_deviation_l1,
+        weight=-0.5,
+        params={
+            "asset_cfg": SceneEntityCfg(
+                "robot",
+                joint_names=[
+                    ".*_shoulder_.*_joint",
+                    ".*_elbow_joint",
+                    ".*_wrist_.*_joint",
+                ],
+            ),
+        },
+    )
+
+    joint_deviation_waists = RewTerm(
+        func=mdp.joint_deviation_l1,
+        weight=-1.0,
+        params={
+            "asset_cfg": SceneEntityCfg(
+                "robot",
+                joint_names="waist_yaw_joint",
+            ),
+        },
+    )
+
+    torso_pelvis_yaw_alignment = RewTerm(
+        func=mdp_nhb.body_body_yaw_alignment_exp,
+        weight=2.0,
+        params={
+            "asset_cfg": SceneEntityCfg(
+                "robot",
+                body_names="torso_link",
+            ),
+            "reference_asset_cfg": SceneEntityCfg(
+                "robot",
+                body_names="pelvis",
+            ),
+            "std": 0.3,
+        },
+    )
+
 @configclass
 class CoopG1S0TerminationsCfg:
     """Termination config for single G1 locomotion."""
@@ -273,7 +315,7 @@ class CoopG1S0TerminationsCfg:
     base_height = DoneTerm(
         func=mdp.root_height_below_minimum,
         params={
-            "minimum_height": 0.35,
+            "minimum_height": 0.4,
         },
     )
 

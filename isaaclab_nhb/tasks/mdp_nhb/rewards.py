@@ -1853,6 +1853,96 @@ def contact_force_exp(
     total_force = torch.norm(contact_forces, dim=-1).sum(dim=(1, 2))
     return torch.exp(-lambda_exp * total_force)
 
+def feet_single_contact(
+        env: ManagerBasedRLEnv,
+        command_name: str,
+        sensor_cfg: SceneEntityCfg,
+        command_threshold: float = 0.1,
+    ) -> torch.Tensor:
+    """Reward one-foot support while walking and two-foot support while standing."""
+    contact_sensor: ContactSensor = env.scene.sensors[sensor_cfg.name]
+    contact_time = contact_sensor.data.current_contact_time[:, sensor_cfg.body_ids]
+    contact_count = torch.sum((contact_time > 0.0).int(), dim=1)
+
+    command = env.command_manager.get_command(command_name)
+    is_moving = torch.norm(command[:, :2], dim=1) > command_threshold
+    moving_reward = (contact_count == 1).float()
+    standing_reward = torch.where(
+        contact_count == 2,
+        torch.ones_like(contact_time[:, 0]),
+        torch.where(contact_count == 1, 0.5 * torch.ones_like(contact_time[:, 0]), torch.zeros_like(contact_time[:, 0])),
+    )
+    return torch.where(is_moving, moving_reward, standing_reward)
+
+def foot_acc_l2(
+        env: ManagerBasedRLEnv,
+        asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+    ) -> torch.Tensor:
+    """Penalize selected foot link linear acceleration."""
+    asset: Articulation = env.scene[asset_cfg.name]
+    foot_acc = asset.data.body_lin_acc_w[:, asset_cfg.body_ids, :]
+    return torch.sum(torch.square(foot_acc), dim=(1, 2))
+
+def feet_yaw_alignment_exp(
+        env: ManagerBasedRLEnv,
+        asset_cfg: SceneEntityCfg,
+        reference_asset_cfg: SceneEntityCfg,
+        std: float = 0.5,
+    ) -> torch.Tensor:
+    """Reward selected foot links for keeping yaw close to a reference body."""
+    asset: Articulation = env.scene[asset_cfg.name]
+    reference: Articulation = env.scene[reference_asset_cfg.name]
+
+    foot_quat = asset.data.body_link_quat_w[:, asset_cfg.body_ids, :]
+    ref_quat = reference.data.body_link_quat_w[:, reference_asset_cfg.body_ids[0], :]
+
+    num_feet = foot_quat.shape[1]
+    foot_yaw_quat = yaw_quat(foot_quat.reshape(-1, 4)).reshape(env.num_envs, num_feet, 4)
+    ref_yaw_quat = yaw_quat(ref_quat).unsqueeze(1).expand(-1, num_feet, -1)
+    rel_quat = math_utils.quat_mul(
+        math_utils.quat_inv(ref_yaw_quat.reshape(-1, 4)),
+        foot_yaw_quat.reshape(-1, 4),
+    )
+    target = torch.zeros_like(rel_quat)
+    target[:, 0] = 1.0
+    yaw_error = quat_error_magnitude(rel_quat, target).reshape(env.num_envs, num_feet)
+    return torch.exp(-torch.mean(torch.square(yaw_error), dim=1) / std**2)
+
+def body_body_yaw_alignment_exp(
+        env: ManagerBasedRLEnv,
+        asset_cfg: SceneEntityCfg,
+        reference_asset_cfg: SceneEntityCfg,
+        std: float = 0.3,
+    ) -> torch.Tensor:
+    """Reward a body link for keeping yaw close to a reference body link."""
+    asset: Articulation = env.scene[asset_cfg.name]
+    reference: Articulation = env.scene[reference_asset_cfg.name]
+
+    body_yaw_quat = yaw_quat(asset.data.body_link_quat_w[:, asset_cfg.body_ids[0], :])
+    ref_yaw_quat = yaw_quat(reference.data.body_link_quat_w[:, reference_asset_cfg.body_ids[0], :])
+    rel_quat = math_utils.quat_mul(math_utils.quat_inv(ref_yaw_quat), body_yaw_quat)
+    target = torch.zeros_like(rel_quat)
+    target[:, 0] = 1.0
+    yaw_error = quat_error_magnitude(rel_quat, target)
+    return torch.exp(-torch.square(yaw_error) / std**2)
+
+def body_body_gravity_alignment_exp(
+        env: ManagerBasedRLEnv,
+        asset_cfg: SceneEntityCfg,
+        reference_asset_cfg: SceneEntityCfg,
+        std: float = 0.2,
+    ) -> torch.Tensor:
+    """Reward a body link for matching the reference body's roll/pitch orientation."""
+    asset: Articulation = env.scene[asset_cfg.name]
+    reference: Articulation = env.scene[reference_asset_cfg.name]
+
+    body_quat = asset.data.body_link_quat_w[:, asset_cfg.body_ids[0], :]
+    ref_quat = reference.data.body_link_quat_w[:, reference_asset_cfg.body_ids[0], :]
+    body_gravity = math_utils.quat_apply_inverse(body_quat, asset.data.GRAVITY_VEC_W)
+    ref_gravity = math_utils.quat_apply_inverse(ref_quat, asset.data.GRAVITY_VEC_W)
+    gravity_error = torch.sum(torch.square(body_gravity[:, :2] - ref_gravity[:, :2]), dim=1)
+    return torch.exp(-gravity_error / std**2)
+
 #################################################################################################
 ################################## 给其他奖励函数调用的辅助函数 ###################################
 #################################################################################################

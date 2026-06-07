@@ -1,10 +1,14 @@
+import math
+
 from isaaclab.managers import RewardTermCfg as RewTerm
 from isaaclab.managers import SceneEntityCfg
 from isaaclab.utils import configclass
 
+import isaaclab_tasks.manager_based.locomotion.velocity.mdp as mdp
 import isaaclab_nhb.tasks.mdp_nhb as mdp_nhb
 
 from ..coopG1S0.coopG1S0_env_cfg import (
+    CoopG1S0CommandsCfg,
     CoopG1S0EventCfg,
     CoopG1S0FlatEnvCfg,
     CoopG1S0ObsCfg,
@@ -14,26 +18,26 @@ from ..coopG1S0.coopG1S0_env_cfg import (
 )
 
 
-HOLD_BOX_REL_POS = (0.30, 0.0, 0.13)
+HOLD_BOX_REL_POS = (0.30, 0.0, 0.23)
 HOLD_BOX_SIZE = (0.18, 0.55, 0.16)
 HOLD_BOX_HALF_SIZE = tuple(size * 0.5 for size in HOLD_BOX_SIZE)
 
 HOLD_HAND_TARGET_POS = (
-    (0.44, 0.24, 0.03),
-    (0.44, -0.24, 0.03),
+    (0.350404, 0.220756, 0.086077),
+    (0.350387, -0.220792, 0.086075),
 )
 
 HOLD_ARM_JOINT_POS = {
-    "left_shoulder_pitch_joint": 0.35,
-    "right_shoulder_pitch_joint": 0.35,
+    "left_shoulder_pitch_joint": -0.60,
+    "right_shoulder_pitch_joint": -0.60,
     "left_shoulder_roll_joint": 0.35,
     "right_shoulder_roll_joint": -0.35,
     "left_shoulder_yaw_joint": 0.0,
     "right_shoulder_yaw_joint": 0.0,
-    "left_elbow_joint": 1.05,
-    "right_elbow_joint": 1.05,
-    "left_wrist_roll_joint": 0.0,
-    "right_wrist_roll_joint": 0.0,
+    "left_elbow_joint": 0.70,
+    "right_elbow_joint": 0.70,
+    "left_wrist_roll_joint": -1.0,
+    "right_wrist_roll_joint": 1.0,
     "left_wrist_pitch_joint": 0.0,
     "right_wrist_pitch_joint": 0.0,
     "left_wrist_yaw_joint": 0.0,
@@ -56,12 +60,53 @@ class CoopG1S1EventCfg(CoopG1S0EventCfg):
 
 
 @configclass
+class CoopG1S1CommandsCfg(CoopG1S0CommandsCfg):
+    """Force S1 training commands to require forward walking."""
+
+    base_velocity = mdp.UniformVelocityCommandCfg(
+        asset_name="robot",
+        resampling_time_range=(10.0, 10.0),
+        rel_standing_envs=0.0,
+        rel_heading_envs=1.0,
+        heading_command=True,
+        heading_control_stiffness=0.5,
+        debug_vis=True,
+        ranges=mdp.UniformVelocityCommandCfg.Ranges(
+            lin_vel_x=(0.25, 0.4),
+            lin_vel_y=(0.0, 0.0),
+            ang_vel_z=(0.0, 0.0),
+            heading=(-math.pi, math.pi),
+        ),
+    )
+
+
+@configclass
 class CoopG1S1RewardsCfg(CoopG1S0RewardsCfg):
     """S0 locomotion rewards plus carry-pose shaping."""
 
+    joint_deviation_arms = None
+
+    track_lin_vel_xy = RewTerm(
+        func=mdp.track_lin_vel_xy_yaw_frame_exp,
+        weight=1.0,
+        params={
+            "command_name": "base_velocity",
+            "std": 0.5,
+        },
+    )
+
+    track_ang_vel_z = RewTerm(
+        func=mdp.track_ang_vel_z_world_exp,
+        weight=1.5,
+        params={
+            "command_name": "base_velocity",
+            "std": 0.5,
+        },
+    )
+
     torso_height = RewTerm(
         func=mdp_nhb.body_height_exp,
-        weight=2.0,
+        weight=1.0,
         params={
             "target_height": 0.82,
             "asset_cfg": SceneEntityCfg(
@@ -72,9 +117,27 @@ class CoopG1S1RewardsCfg(CoopG1S0RewardsCfg):
         },
     )
 
+    torso_pelvis_yaw_alignment = RewTerm(
+        func=mdp_nhb.body_body_yaw_alignment_exp,
+        weight=3.0,
+        params={
+            "asset_cfg": SceneEntityCfg(
+                "robot",
+                body_names="torso_link",
+            ),
+            "reference_asset_cfg": SceneEntityCfg(
+                "robot",
+                body_names="pelvis",
+            ),
+            "std": 0.3,
+        },
+    )
+
+    torso_pelvis_gravity_alignment = None
+
     arm_target_pose = RewTerm(
         func=mdp_nhb.joint_target_l1,
-        weight=-0.02,
+        weight=-0.15,
         params={
             "asset_cfg": SceneEntityCfg(
                 "robot",
@@ -90,7 +153,7 @@ class CoopG1S1RewardsCfg(CoopG1S0RewardsCfg):
 
     hand_payload_pose = RewTerm(
         func=mdp_nhb.body_body_rel_pos_exp,
-        weight=1.25,
+        weight=2.0,
         params={
             "asset_cfg": SceneEntityCfg(
                 "robot",
@@ -127,6 +190,66 @@ class CoopG1S1RewardsCfg(CoopG1S0RewardsCfg):
         },
     )
 
+    feet_air_time = None
+
+    feet_contact = None
+
+    feet_slide = RewTerm(
+        func=mdp.feet_slide,
+        weight=-0.2,
+        params={
+            "sensor_cfg": SceneEntityCfg(
+                "contact_forces",
+                body_names=".*_ankle_roll_link",
+            ),
+            "asset_cfg": SceneEntityCfg(
+                "robot",
+                body_names=".*_ankle_roll_link",
+            ),
+        },
+    )
+
+    feet_clearance = RewTerm(
+        func=mdp_nhb.foot_clearance_reward,
+        weight=1.0,
+        params={
+            "target_height": 0.1,
+            "std": 0.05,
+            "tanh_mult": 2.0,
+            "asset_cfg": SceneEntityCfg(
+                "robot",
+                body_names=".*_ankle_roll_link",
+            ),
+        },
+    )
+
+    foot_acc = RewTerm(
+        func=mdp_nhb.foot_acc_l2,
+        weight=-1.0e-5,
+        params={
+            "asset_cfg": SceneEntityCfg(
+                "robot",
+                body_names=".*_ankle_roll_link",
+            ),
+        },
+    )
+
+    feet_orientation = RewTerm(
+        func=mdp_nhb.feet_yaw_alignment_exp,
+        weight=0.5,
+        params={
+            "asset_cfg": SceneEntityCfg(
+                "robot",
+                body_names=".*_ankle_roll_link",
+            ),
+            "reference_asset_cfg": SceneEntityCfg(
+                "robot",
+                body_names="pelvis",
+            ),
+            "std": 0.5,
+        },
+    )
+
 
 @configclass
 class CoopG1S1HoldBoxEnvCfg(CoopG1S0FlatEnvCfg):
@@ -139,6 +262,7 @@ class CoopG1S1HoldBoxEnvCfg(CoopG1S0FlatEnvCfg):
     )
 
     observations: CoopG1S0ObsCfg = CoopG1S0ObsCfg()
+    commands: CoopG1S1CommandsCfg = CoopG1S1CommandsCfg()
     events: CoopG1S1EventCfg = CoopG1S1EventCfg()
     rewards: CoopG1S1RewardsCfg = CoopG1S1RewardsCfg()
     terminations: CoopG1S0TerminationsCfg = CoopG1S0TerminationsCfg()

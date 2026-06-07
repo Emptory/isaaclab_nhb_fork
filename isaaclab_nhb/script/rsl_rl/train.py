@@ -128,6 +128,13 @@ torch.backends.cudnn.deterministic = False
 torch.backends.cudnn.benchmark = False
 
 
+class RslRlVecEnvWrapperExtraInfo(RslRlVecEnvWrapper):
+    """Accept the lab-modified RSL-RL step signature while passing tensor actions to Isaac Lab."""
+
+    def step(self, actions: torch.Tensor, extra_info=None):
+        return super().step(actions)
+
+
 @hydra_task_config(args_cli.task, args_cli.agent)
 def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agent_cfg: RslRlBaseRunnerCfg):
     """Train with RSL-RL agent."""
@@ -219,7 +226,8 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
 
     # wrap around environment for rsl-rl
     # 将环境包装为rsl-rl环境
-    env = RslRlVecEnvWrapperDictAction(env, clip_actions=agent_cfg.clip_actions)
+    wrapper_cls = RslRlVecEnvWrapperDictAction if hasattr(env.unwrapped, "action_extra_info") else RslRlVecEnvWrapperExtraInfo
+    env = wrapper_cls(env, clip_actions=agent_cfg.clip_actions)
 
     # create runner from rsl-rl
     # 创建runner

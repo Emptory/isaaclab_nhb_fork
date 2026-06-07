@@ -19,6 +19,44 @@ import isaaclab_nhb
 # local imports
 import cli_args  # isort: skip
 
+
+USE_LOCAL_PLAY_DEFAULTS = True
+
+
+def _project_path(path: str) -> str:
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", path))
+
+
+# Paste the exact checkpoint file here. Directories are intentionally rejected.
+LOCAL_CHECKPOINT_PATH = _project_path(
+    "logs/rsl_rl/coopG1S1/2026-06-07_12-11-26_s1_from43000_vel1_ang15_height1_hand2_16k_5k/model_43000.pt"
+)
+
+
+LOCAL_PLAY_DEFAULTS = {
+    "task": "CoopG1S1-29dof-HoldBox",
+    "checkpoint": LOCAL_CHECKPOINT_PATH,
+    "device": "cuda:5",
+    "num_envs": 1,
+    "show_s1_hand_targets": True,
+    "real_time": False,
+    "command": {
+        "lin_vel_x": (0.3, 0.3),
+        "lin_vel_y": (0.0, 0.0),
+        "ang_vel_z": (0.0, 0.0),
+        "heading_command": False,
+        "rel_standing_envs": 0.0,
+    },
+    "reset_base": {
+        "yaw": (1.57, 1.57),
+        "x": (0.0, 0.0),
+        "y": (0.0, 0.0),
+    },
+}
+
+
+_ORIGINAL_ARGV = sys.argv[1:]
+
 # add argparse arguments
 parser = argparse.ArgumentParser(description="Train an RL agent with RSL-RL.")
 parser.add_argument("--video", action="store_true", default=False, help="Record videos during training.")
@@ -57,6 +95,53 @@ AppLauncher.add_app_launcher_args(parser)
 args_cli, hydra_args = parser.parse_known_args()
 
 
+def _cli_has_option(*option_names: str) -> bool:
+    for arg in _ORIGINAL_ARGV:
+        for option_name in option_names:
+            if arg == option_name or arg.startswith(f"{option_name}="):
+                return True
+    return False
+
+
+def _resolve_local_checkpoint_path(path: str) -> str:
+    checkpoint_path = os.path.abspath(os.path.expanduser(path.strip().strip("'\"")))
+    if not checkpoint_path.endswith(".pt"):
+        raise ValueError(
+            "LOCAL_CHECKPOINT_PATH must point to a .pt checkpoint file, not a directory or another file type: "
+            f"{checkpoint_path}"
+        )
+    if not os.path.isfile(checkpoint_path):
+        raise FileNotFoundError(f"LOCAL_CHECKPOINT_PATH does not exist: {checkpoint_path}")
+    return checkpoint_path
+
+
+def _apply_local_play_defaults() -> None:
+    if not USE_LOCAL_PLAY_DEFAULTS:
+        return
+
+    if not _cli_has_option("--task"):
+        args_cli.task = LOCAL_PLAY_DEFAULTS["task"]
+    if not _cli_has_option("--checkpoint"):
+        args_cli.checkpoint = _resolve_local_checkpoint_path(LOCAL_PLAY_DEFAULTS["checkpoint"])
+    if not _cli_has_option("--device"):
+        args_cli.device = LOCAL_PLAY_DEFAULTS["device"]
+    if not _cli_has_option("--num_envs"):
+        args_cli.num_envs = LOCAL_PLAY_DEFAULTS["num_envs"]
+    if not _cli_has_option("--show_s1_hand_targets"):
+        args_cli.show_s1_hand_targets = LOCAL_PLAY_DEFAULTS["show_s1_hand_targets"]
+    if not _cli_has_option("--real-time"):
+        args_cli.real_time = LOCAL_PLAY_DEFAULTS["real_time"]
+
+    print(
+        "[INFO] Local play defaults: "
+        f"task={args_cli.task}, device={args_cli.device}, "
+        f"num_envs={args_cli.num_envs}, checkpoint={args_cli.checkpoint}"
+    )
+
+
+_apply_local_play_defaults()
+
+
 
 
 # 测试奖励用。不要在这里覆盖命令行参数；按 CLI 传入 task/checkpoint。
@@ -82,7 +167,7 @@ args_cli, hydra_args = parser.parse_known_args()
 # 使用WebRTC串流
 # args_cli.livestream=2
 
-args_cli.device = "cuda:0"
+# Do not override the CLI device here; pass --device explicitly when launching.
 # args_cli.headless = True
 # args_cli.real_time = True
 # args_cli.video = True
@@ -155,6 +240,13 @@ import isaaclab_tasks.manager_based.locomotion.velocity.mdp as mdp
 from isaaclab_nhb.script.rsl_rl.data_logger import DataLogger
 
 
+class RslRlVecEnvWrapperExtraInfo(RslRlVecEnvWrapper):
+    """Accept the lab-modified RSL-RL step signature while passing tensor actions to Isaac Lab."""
+
+    def step(self, actions: torch.Tensor, extra_info=None):
+        return super().step(actions)
+
+
 def get_camera_position():
     """Get the current camera position from the USD stage.
 
@@ -206,15 +298,17 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     # env_cfg.commands.base_velocity.ranges.ang_vel_z = [-1.0, 1.0]
     # env_cfg.commands.base_velocity.ranges.ang_vel_z = [-1.5, 1.5] # 给0则yawKp失效
     # env_cfg.commands.base_velocity.ranges.heading = [1.57, 1.57]
-    env_cfg.commands.base_velocity.ranges.lin_vel_x = (0.3, 0.3)
-    env_cfg.commands.base_velocity.ranges.lin_vel_y = (0.0, 0.0)
-    env_cfg.commands.base_velocity.ranges.ang_vel_z = (0.0, 0.0)
-    env_cfg.commands.base_velocity.heading_command = False
-    env_cfg.commands.base_velocity.rel_standing_envs = 0.0
+    play_command_cfg = LOCAL_PLAY_DEFAULTS["command"]
+    env_cfg.commands.base_velocity.ranges.lin_vel_x = play_command_cfg["lin_vel_x"]
+    env_cfg.commands.base_velocity.ranges.lin_vel_y = play_command_cfg["lin_vel_y"]
+    env_cfg.commands.base_velocity.ranges.ang_vel_z = play_command_cfg["ang_vel_z"]
+    env_cfg.commands.base_velocity.heading_command = play_command_cfg["heading_command"]
+    env_cfg.commands.base_velocity.rel_standing_envs = play_command_cfg["rel_standing_envs"]
     if hasattr(env_cfg.events, "reset_base"):
-        env_cfg.events.reset_base.params["pose_range"]["yaw"] = (1.57,1.57)
-        env_cfg.events.reset_base.params["pose_range"]["x"] = (0,0)
-        env_cfg.events.reset_base.params["pose_range"]["y"] = (0,0)
+        reset_base_cfg = LOCAL_PLAY_DEFAULTS["reset_base"]
+        env_cfg.events.reset_base.params["pose_range"]["yaw"] = reset_base_cfg["yaw"]
+        env_cfg.events.reset_base.params["pose_range"]["x"] = reset_base_cfg["x"]
+        env_cfg.events.reset_base.params["pose_range"]["y"] = reset_base_cfg["y"]
     # env_cfg.viewer.eye = (2.0, 0.0, 2.0)
     # env_cfg.viewer.eye = (-1.0, 2.0, 2.0)
     # env_cfg.viewer.lookat = (0.0, 0.0, 0.0)
@@ -289,7 +383,8 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         env = gym.wrappers.RecordVideo(env, **video_kwargs)
 
     # wrap around environment for rsl-rl
-    env = RslRlVecEnvWrapperDictAction(env, clip_actions=agent_cfg.clip_actions)
+    wrapper_cls = RslRlVecEnvWrapperDictAction if hasattr(env.unwrapped, "action_extra_info") else RslRlVecEnvWrapperExtraInfo
+    env = wrapper_cls(env, clip_actions=agent_cfg.clip_actions)
 
     print(f"[INFO]: Loading model checkpoint from: {resume_path}")
     # load previously trained model
@@ -384,8 +479,8 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         s1_hand_target_viz = {
             "left_viz": left_target_viz,
             "right_viz": right_target_viz,
-            "left_local": torch.tensor([[0.44, 0.24, 0.03]], device=env.unwrapped.device),
-            "right_local": torch.tensor([[0.44, -0.24, 0.03]], device=env.unwrapped.device),
+            "left_local": torch.tensor([[0.337, 0.309, 0.137]], device=env.unwrapped.device),
+            "right_local": torch.tensor([[0.337, -0.309, 0.137]], device=env.unwrapped.device),
         }
         print("[INFO] Showing S1 hand target markers: red=left target, blue=right target.")
 
