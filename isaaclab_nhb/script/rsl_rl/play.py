@@ -29,7 +29,7 @@ def _project_path(path: str) -> str:
 
 # Paste the exact checkpoint file here. Directories are intentionally rejected.
 LOCAL_CHECKPOINT_PATH = _project_path(
-    "logs/rsl_rl/coopG1S1/2026-06-07_12-11-26_s1_from43000_vel1_ang15_height1_hand2_16k_5k/model_43000.pt"
+    "logs/rsl_rl/coopG1S1/2026-06-08_15-11-10_s1_resume3000_forward_footdist_airtime_16k_50k/model_4000.pt"
 )
 
 

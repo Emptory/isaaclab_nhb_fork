@@ -623,12 +623,8 @@ class G1RoughCurriculumCfg:
             "reward_term_name": "biped_distance_y_exp",
         },
     )
-    action_smooth_tripple_l2_rew_weight_ratio = CurrTerm(
-        func=mdp_nhb.reward_weight_tracking_levels,
-        params={
-            "reward_term_name": "action_smooth_tripple_l2",
-        },
-    )
+    # Disabled because the matching reward term is currently not defined.
+    action_smooth_tripple_l2_rew_weight_ratio = None
     dof_smooth_l2_rew_weight_ratio = CurrTerm(
         func=mdp_nhb.reward_weight_tracking_levels,
         params={
@@ -723,4 +719,3 @@ class G1FlatEnvCfg(G1RoughEnvCfg):
         self.observations.critic.height_scan = None
         # no terrain curriculum
         self.curriculum.terrain_levels = None
-

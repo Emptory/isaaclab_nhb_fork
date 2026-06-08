@@ -1,7 +1,6 @@
-import math
-
 from isaaclab.managers import RewardTermCfg as RewTerm
 from isaaclab.managers import SceneEntityCfg
+from isaaclab.managers import TerminationTermCfg as DoneTerm
 from isaaclab.utils import configclass
 
 import isaaclab_tasks.manager_based.locomotion.velocity.mdp as mdp
@@ -67,15 +66,14 @@ class CoopG1S1CommandsCfg(CoopG1S0CommandsCfg):
         asset_name="robot",
         resampling_time_range=(10.0, 10.0),
         rel_standing_envs=0.0,
-        rel_heading_envs=1.0,
-        heading_command=True,
+        rel_heading_envs=0.0,
+        heading_command=False,
         heading_control_stiffness=0.5,
         debug_vis=True,
         ranges=mdp.UniformVelocityCommandCfg.Ranges(
             lin_vel_x=(0.25, 0.4),
             lin_vel_y=(0.0, 0.0),
             ang_vel_z=(0.0, 0.0),
-            heading=(-math.pi, math.pi),
         ),
     )
 
@@ -88,16 +86,16 @@ class CoopG1S1RewardsCfg(CoopG1S0RewardsCfg):
 
     track_lin_vel_xy = RewTerm(
         func=mdp.track_lin_vel_xy_yaw_frame_exp,
-        weight=1.0,
+        weight=5.0,
         params={
             "command_name": "base_velocity",
-            "std": 0.5,
+            "std": 0.35,
         },
     )
 
     track_ang_vel_z = RewTerm(
         func=mdp.track_ang_vel_z_world_exp,
-        weight=1.5,
+        weight=0.2,
         params={
             "command_name": "base_velocity",
             "std": 0.5,
@@ -190,7 +188,34 @@ class CoopG1S1RewardsCfg(CoopG1S0RewardsCfg):
         },
     )
 
-    feet_air_time = None
+    feet_distance_y = RewTerm(
+        func=mdp_nhb.biped_distance_y_l2,
+        weight=-30.0,
+        params={
+            "min_distance": 0.21,
+            "max_distance": 0.27,
+            "command_name": "base_velocity",
+            "velocity_threshold": 0.1,
+            "asset_cfg": SceneEntityCfg(
+                "robot",
+                body_names=".*_ankle_roll_link",
+                preserve_order=True,
+            ),
+        },
+    )
+
+    feet_air_time = RewTerm(
+        func=mdp.feet_air_time_positive_biped,
+        weight=1.0,
+        params={
+            "command_name": "base_velocity",
+            "sensor_cfg": SceneEntityCfg(
+                "contact_forces",
+                body_names=".*_ankle_roll_link",
+            ),
+            "threshold": 0.4,
+        },
+    )
 
     feet_contact = None
 
@@ -209,19 +234,7 @@ class CoopG1S1RewardsCfg(CoopG1S0RewardsCfg):
         },
     )
 
-    feet_clearance = RewTerm(
-        func=mdp_nhb.foot_clearance_reward,
-        weight=1.0,
-        params={
-            "target_height": 0.1,
-            "std": 0.05,
-            "tanh_mult": 2.0,
-            "asset_cfg": SceneEntityCfg(
-                "robot",
-                body_names=".*_ankle_roll_link",
-            ),
-        },
-    )
+    feet_clearance = None
 
     foot_acc = RewTerm(
         func=mdp_nhb.foot_acc_l2,
@@ -252,6 +265,25 @@ class CoopG1S1RewardsCfg(CoopG1S0RewardsCfg):
 
 
 @configclass
+class CoopG1S1TerminationsCfg(CoopG1S0TerminationsCfg):
+    """Stricter S1 terminations to reject crouched-but-stable local optima."""
+
+    base_height = DoneTerm(
+        func=mdp.root_height_below_minimum,
+        params={
+            "minimum_height": 0.6,
+        },
+    )
+
+    bad_orientation = DoneTerm(
+        func=mdp.bad_orientation,
+        params={
+            "limit_angle": 0.7,
+        },
+    )
+
+
+@configclass
 class CoopG1S1HoldBoxEnvCfg(CoopG1S0FlatEnvCfg):
     """Single G1 locomotion task with carry-pose pretraining."""
 
@@ -265,4 +297,4 @@ class CoopG1S1HoldBoxEnvCfg(CoopG1S0FlatEnvCfg):
     commands: CoopG1S1CommandsCfg = CoopG1S1CommandsCfg()
     events: CoopG1S1EventCfg = CoopG1S1EventCfg()
     rewards: CoopG1S1RewardsCfg = CoopG1S1RewardsCfg()
-    terminations: CoopG1S0TerminationsCfg = CoopG1S0TerminationsCfg()
+    terminations: CoopG1S1TerminationsCfg = CoopG1S1TerminationsCfg()
