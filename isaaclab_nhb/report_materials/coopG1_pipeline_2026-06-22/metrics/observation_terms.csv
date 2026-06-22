@@ -1,0 +1,519 @@
+﻿clip,experiment,func,group,noise,run,scale,term
+null,coopG1S0,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-05-15_21-59-12_coopG1S0_hist5_steadyreward_50k_gui,null,base_ang_vel
+null,coopG1S0,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-05-15_21-59-12_coopG1S0_hist5_steadyreward_50k_gui,null,projected_gravity
+null,coopG1S0,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-05-15_21-59-12_coopG1S0_hist5_steadyreward_50k_gui,null,velocity_commands
+null,coopG1S0,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-05-15_21-59-12_coopG1S0_hist5_steadyreward_50k_gui,null,joint_pos
+null,coopG1S0,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-05-15_21-59-12_coopG1S0_hist5_steadyreward_50k_gui,null,joint_vel
+null,coopG1S0,isaaclab.envs.mdp.observations:last_action,policy,null,2026-05-15_21-59-12_coopG1S0_hist5_steadyreward_50k_gui,null,actions
+null,coopG1S0,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-05-15_21-59-12_coopG1S0_hist5_steadyreward_50k_gui,null,base_lin_vel
+null,coopG1S0,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-05-15_21-59-12_coopG1S0_hist5_steadyreward_50k_gui,null,base_ang_vel
+null,coopG1S0,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-05-15_21-59-12_coopG1S0_hist5_steadyreward_50k_gui,null,projected_gravity
+null,coopG1S0,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-05-15_21-59-12_coopG1S0_hist5_steadyreward_50k_gui,null,velocity_commands
+null,coopG1S0,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-05-15_21-59-12_coopG1S0_hist5_steadyreward_50k_gui,null,joint_pos
+null,coopG1S0,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-05-15_21-59-12_coopG1S0_hist5_steadyreward_50k_gui,null,joint_vel
+null,coopG1S0,isaaclab.envs.mdp.observations:last_action,critic,null,2026-05-15_21-59-12_coopG1S0_hist5_steadyreward_50k_gui,null,actions
+null,coopG1S0,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-06_13-45-36_s0_clean_arm_waist_yaw_from42600_16k_5k,null,base_ang_vel
+null,coopG1S0,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-06_13-45-36_s0_clean_arm_waist_yaw_from42600_16k_5k,null,projected_gravity
+null,coopG1S0,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-06_13-45-36_s0_clean_arm_waist_yaw_from42600_16k_5k,null,velocity_commands
+null,coopG1S0,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-06_13-45-36_s0_clean_arm_waist_yaw_from42600_16k_5k,null,joint_pos
+null,coopG1S0,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-06_13-45-36_s0_clean_arm_waist_yaw_from42600_16k_5k,null,joint_vel
+null,coopG1S0,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-06_13-45-36_s0_clean_arm_waist_yaw_from42600_16k_5k,null,actions
+null,coopG1S0,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-06_13-45-36_s0_clean_arm_waist_yaw_from42600_16k_5k,null,base_lin_vel
+null,coopG1S0,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-06_13-45-36_s0_clean_arm_waist_yaw_from42600_16k_5k,null,base_ang_vel
+null,coopG1S0,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-06_13-45-36_s0_clean_arm_waist_yaw_from42600_16k_5k,null,projected_gravity
+null,coopG1S0,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-06_13-45-36_s0_clean_arm_waist_yaw_from42600_16k_5k,null,velocity_commands
+null,coopG1S0,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-06_13-45-36_s0_clean_arm_waist_yaw_from42600_16k_5k,null,joint_pos
+null,coopG1S0,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-06_13-45-36_s0_clean_arm_waist_yaw_from42600_16k_5k,null,joint_vel
+null,coopG1S0,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-06_13-45-36_s0_clean_arm_waist_yaw_from42600_16k_5k,null,actions
+null,coopG1S0,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-09_11-36-13_s0_gait_bodyyaw_16k_5k,null,gait_commands
+null,coopG1S0,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-09_11-36-13_s0_gait_bodyyaw_16k_5k,null,base_ang_vel
+null,coopG1S0,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-09_11-36-13_s0_gait_bodyyaw_16k_5k,null,projected_gravity
+null,coopG1S0,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-09_11-36-13_s0_gait_bodyyaw_16k_5k,null,velocity_commands
+null,coopG1S0,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-09_11-36-13_s0_gait_bodyyaw_16k_5k,null,joint_pos
+null,coopG1S0,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-09_11-36-13_s0_gait_bodyyaw_16k_5k,null,joint_vel
+null,coopG1S0,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-09_11-36-13_s0_gait_bodyyaw_16k_5k,null,actions
+null,coopG1S0,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-09_11-36-13_s0_gait_bodyyaw_16k_5k,null,gait_commands
+null,coopG1S0,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-09_11-36-13_s0_gait_bodyyaw_16k_5k,null,base_lin_vel
+null,coopG1S0,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-09_11-36-13_s0_gait_bodyyaw_16k_5k,null,base_ang_vel
+null,coopG1S0,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-09_11-36-13_s0_gait_bodyyaw_16k_5k,null,projected_gravity
+null,coopG1S0,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-09_11-36-13_s0_gait_bodyyaw_16k_5k,null,velocity_commands
+null,coopG1S0,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-09_11-36-13_s0_gait_bodyyaw_16k_5k,null,joint_pos
+null,coopG1S0,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-09_11-36-13_s0_gait_bodyyaw_16k_5k,null,joint_vel
+null,coopG1S0,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-09_11-36-13_s0_gait_bodyyaw_16k_5k,null,actions
+null,coopG1S0,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,gait_commands
+null,coopG1S0,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,base_ang_vel
+null,coopG1S0,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,projected_gravity
+null,coopG1S0,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,velocity_commands
+null,coopG1S0,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,joint_pos
+null,coopG1S0,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,joint_vel
+null,coopG1S0,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,actions
+null,coopG1S0,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,gait_commands
+null,coopG1S0,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,base_lin_vel
+null,coopG1S0,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,base_ang_vel
+null,coopG1S0,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,projected_gravity
+null,coopG1S0,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,velocity_commands
+null,coopG1S0,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,joint_pos
+null,coopG1S0,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,joint_vel
+null,coopG1S0,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-05-28_19-29-28_s1_height2_carrypose_fromS0_50k_headless,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-05-28_19-29-28_s1_height2_carrypose_fromS0_50k_headless,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-05-28_19-29-28_s1_height2_carrypose_fromS0_50k_headless,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-05-28_19-29-28_s1_height2_carrypose_fromS0_50k_headless,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-05-28_19-29-28_s1_height2_carrypose_fromS0_50k_headless,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-05-28_19-29-28_s1_height2_carrypose_fromS0_50k_headless,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-05-28_19-29-28_s1_height2_carrypose_fromS0_50k_headless,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-05-28_19-29-28_s1_height2_carrypose_fromS0_50k_headless,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-05-28_19-29-28_s1_height2_carrypose_fromS0_50k_headless,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-05-28_19-29-28_s1_height2_carrypose_fromS0_50k_headless,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-05-28_19-29-28_s1_height2_carrypose_fromS0_50k_headless,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-05-28_19-29-28_s1_height2_carrypose_fromS0_50k_headless,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-05-28_19-29-28_s1_height2_carrypose_fromS0_50k_headless,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-05-30_17-24-12_holdbox,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-05-30_17-24-12_holdbox,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-05-30_17-24-12_holdbox,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-05-30_17-24-12_holdbox,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-05-30_17-24-12_holdbox,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-05-30_17-24-12_holdbox,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-05-30_17-24-12_holdbox,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-05-30_17-24-12_holdbox,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-05-30_17-24-12_holdbox,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-05-30_17-24-12_holdbox,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-05-30_17-24-12_holdbox,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-05-30_17-24-12_holdbox,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-05-30_17-24-12_holdbox,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-01_20-06-52_s1_scratch_support_pose_boxup_16k_50k_save1k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-01_20-06-52_s1_scratch_support_pose_boxup_16k_50k_save1k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-01_20-06-52_s1_scratch_support_pose_boxup_16k_50k_save1k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-01_20-06-52_s1_scratch_support_pose_boxup_16k_50k_save1k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-01_20-06-52_s1_scratch_support_pose_boxup_16k_50k_save1k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-01_20-06-52_s1_scratch_support_pose_boxup_16k_50k_save1k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-01_20-06-52_s1_scratch_support_pose_boxup_16k_50k_save1k,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-01_20-06-52_s1_scratch_support_pose_boxup_16k_50k_save1k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-01_20-06-52_s1_scratch_support_pose_boxup_16k_50k_save1k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-01_20-06-52_s1_scratch_support_pose_boxup_16k_50k_save1k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-01_20-06-52_s1_scratch_support_pose_boxup_16k_50k_save1k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-01_20-06-52_s1_scratch_support_pose_boxup_16k_50k_save1k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-01_20-06-52_s1_scratch_support_pose_boxup_16k_50k_save1k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-01_20-07-28_s1_fromS0_42600_support_pose_boxup_16k_5k_save1k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-01_20-07-28_s1_fromS0_42600_support_pose_boxup_16k_5k_save1k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-01_20-07-28_s1_fromS0_42600_support_pose_boxup_16k_5k_save1k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-01_20-07-28_s1_fromS0_42600_support_pose_boxup_16k_5k_save1k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-01_20-07-28_s1_fromS0_42600_support_pose_boxup_16k_5k_save1k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-01_20-07-28_s1_fromS0_42600_support_pose_boxup_16k_5k_save1k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-01_20-07-28_s1_fromS0_42600_support_pose_boxup_16k_5k_save1k,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-01_20-07-28_s1_fromS0_42600_support_pose_boxup_16k_5k_save1k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-01_20-07-28_s1_fromS0_42600_support_pose_boxup_16k_5k_save1k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-01_20-07-28_s1_fromS0_42600_support_pose_boxup_16k_5k_save1k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-01_20-07-28_s1_fromS0_42600_support_pose_boxup_16k_5k_save1k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-01_20-07-28_s1_fromS0_42600_support_pose_boxup_16k_5k_save1k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-01_20-07-28_s1_fromS0_42600_support_pose_boxup_16k_5k_save1k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-02_13-45-44_s1_fromMay28_92599_support_pose_boxup_16k_5k_save1k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-02_13-45-44_s1_fromMay28_92599_support_pose_boxup_16k_5k_save1k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-02_13-45-44_s1_fromMay28_92599_support_pose_boxup_16k_5k_save1k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-02_13-45-44_s1_fromMay28_92599_support_pose_boxup_16k_5k_save1k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-02_13-45-44_s1_fromMay28_92599_support_pose_boxup_16k_5k_save1k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-02_13-45-44_s1_fromMay28_92599_support_pose_boxup_16k_5k_save1k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-02_13-45-44_s1_fromMay28_92599_support_pose_boxup_16k_5k_save1k,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-02_13-45-44_s1_fromMay28_92599_support_pose_boxup_16k_5k_save1k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-02_13-45-44_s1_fromMay28_92599_support_pose_boxup_16k_5k_save1k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-02_13-45-44_s1_fromMay28_92599_support_pose_boxup_16k_5k_save1k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-02_13-45-44_s1_fromMay28_92599_support_pose_boxup_16k_5k_save1k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-02_13-45-44_s1_fromMay28_92599_support_pose_boxup_16k_5k_save1k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-02_13-45-44_s1_fromMay28_92599_support_pose_boxup_16k_5k_save1k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-03_08-19-24_s1_fromMay30_92599_vel10_hand8_cfg_16k_5k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-03_08-19-24_s1_fromMay30_92599_vel10_hand8_cfg_16k_5k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-03_08-19-24_s1_fromMay30_92599_vel10_hand8_cfg_16k_5k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-03_08-19-24_s1_fromMay30_92599_vel10_hand8_cfg_16k_5k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-03_08-19-24_s1_fromMay30_92599_vel10_hand8_cfg_16k_5k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-03_08-19-24_s1_fromMay30_92599_vel10_hand8_cfg_16k_5k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-03_08-19-24_s1_fromMay30_92599_vel10_hand8_cfg_16k_5k,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-03_08-19-24_s1_fromMay30_92599_vel10_hand8_cfg_16k_5k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-03_08-19-24_s1_fromMay30_92599_vel10_hand8_cfg_16k_5k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-03_08-19-24_s1_fromMay30_92599_vel10_hand8_cfg_16k_5k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-03_08-19-24_s1_fromMay30_92599_vel10_hand8_cfg_16k_5k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-03_08-19-24_s1_fromMay30_92599_vel10_hand8_cfg_16k_5k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-03_08-19-24_s1_fromMay30_92599_vel10_hand8_cfg_16k_5k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-03_08-20-14_s1_fromJun02_97598_vel10_hand8_cfg_16k_5k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-03_08-20-14_s1_fromJun02_97598_vel10_hand8_cfg_16k_5k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-03_08-20-14_s1_fromJun02_97598_vel10_hand8_cfg_16k_5k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-03_08-20-14_s1_fromJun02_97598_vel10_hand8_cfg_16k_5k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-03_08-20-14_s1_fromJun02_97598_vel10_hand8_cfg_16k_5k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-03_08-20-14_s1_fromJun02_97598_vel10_hand8_cfg_16k_5k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-03_08-20-14_s1_fromJun02_97598_vel10_hand8_cfg_16k_5k,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-03_08-20-14_s1_fromJun02_97598_vel10_hand8_cfg_16k_5k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-03_08-20-14_s1_fromJun02_97598_vel10_hand8_cfg_16k_5k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-03_08-20-14_s1_fromJun02_97598_vel10_hand8_cfg_16k_5k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-03_08-20-14_s1_fromJun02_97598_vel10_hand8_cfg_16k_5k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-03_08-20-14_s1_fromJun02_97598_vel10_hand8_cfg_16k_5k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-03_08-20-14_s1_fromJun02_97598_vel10_hand8_cfg_16k_5k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-04_10-10-45_s1_fromMay30_96000_feet_contact_orient_torso_16k_5k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-04_10-10-45_s1_fromMay30_96000_feet_contact_orient_torso_16k_5k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-04_10-10-45_s1_fromMay30_96000_feet_contact_orient_torso_16k_5k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-04_10-10-45_s1_fromMay30_96000_feet_contact_orient_torso_16k_5k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-04_10-10-45_s1_fromMay30_96000_feet_contact_orient_torso_16k_5k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-04_10-10-45_s1_fromMay30_96000_feet_contact_orient_torso_16k_5k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-04_10-10-45_s1_fromMay30_96000_feet_contact_orient_torso_16k_5k,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-04_10-10-45_s1_fromMay30_96000_feet_contact_orient_torso_16k_5k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-04_10-10-45_s1_fromMay30_96000_feet_contact_orient_torso_16k_5k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-04_10-10-45_s1_fromMay30_96000_feet_contact_orient_torso_16k_5k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-04_10-10-45_s1_fromMay30_96000_feet_contact_orient_torso_16k_5k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-04_10-10-45_s1_fromMay30_96000_feet_contact_orient_torso_16k_5k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-04_10-10-45_s1_fromMay30_96000_feet_contact_orient_torso_16k_5k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-04_10-11-08_s1_fromJun02_101000_feet_contact_orient_torso_16k_5k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-04_10-11-08_s1_fromJun02_101000_feet_contact_orient_torso_16k_5k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-04_10-11-08_s1_fromJun02_101000_feet_contact_orient_torso_16k_5k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-04_10-11-08_s1_fromJun02_101000_feet_contact_orient_torso_16k_5k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-04_10-11-08_s1_fromJun02_101000_feet_contact_orient_torso_16k_5k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-04_10-11-08_s1_fromJun02_101000_feet_contact_orient_torso_16k_5k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-04_10-11-08_s1_fromJun02_101000_feet_contact_orient_torso_16k_5k,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-04_10-11-08_s1_fromJun02_101000_feet_contact_orient_torso_16k_5k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-04_10-11-08_s1_fromJun02_101000_feet_contact_orient_torso_16k_5k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-04_10-11-08_s1_fromJun02_101000_feet_contact_orient_torso_16k_5k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-04_10-11-08_s1_fromJun02_101000_feet_contact_orient_torso_16k_5k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-04_10-11-08_s1_fromJun02_101000_feet_contact_orient_torso_16k_5k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-04_10-11-08_s1_fromJun02_101000_feet_contact_orient_torso_16k_5k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-06_13-45-42_s1_repair_from43000_hand4_yaw3_16k_5k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-06_13-45-42_s1_repair_from43000_hand4_yaw3_16k_5k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-06_13-45-42_s1_repair_from43000_hand4_yaw3_16k_5k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-06_13-45-42_s1_repair_from43000_hand4_yaw3_16k_5k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-06_13-45-42_s1_repair_from43000_hand4_yaw3_16k_5k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-06_13-45-42_s1_repair_from43000_hand4_yaw3_16k_5k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-06_13-45-42_s1_repair_from43000_hand4_yaw3_16k_5k,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-06_13-45-42_s1_repair_from43000_hand4_yaw3_16k_5k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-06_13-45-42_s1_repair_from43000_hand4_yaw3_16k_5k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-06_13-45-42_s1_repair_from43000_hand4_yaw3_16k_5k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-06_13-45-42_s1_repair_from43000_hand4_yaw3_16k_5k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-06_13-45-42_s1_repair_from43000_hand4_yaw3_16k_5k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-06_13-45-42_s1_repair_from43000_hand4_yaw3_16k_5k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-06_19-19-37_s1_repair_from43000_hand4_yaw3_slide_clearance_16k_5k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-06_19-19-37_s1_repair_from43000_hand4_yaw3_slide_clearance_16k_5k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-06_19-19-37_s1_repair_from43000_hand4_yaw3_slide_clearance_16k_5k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-06_19-19-37_s1_repair_from43000_hand4_yaw3_slide_clearance_16k_5k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-06_19-19-37_s1_repair_from43000_hand4_yaw3_slide_clearance_16k_5k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-06_19-19-37_s1_repair_from43000_hand4_yaw3_slide_clearance_16k_5k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-06_19-19-37_s1_repair_from43000_hand4_yaw3_slide_clearance_16k_5k,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-06_19-19-37_s1_repair_from43000_hand4_yaw3_slide_clearance_16k_5k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-06_19-19-37_s1_repair_from43000_hand4_yaw3_slide_clearance_16k_5k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-06_19-19-37_s1_repair_from43000_hand4_yaw3_slide_clearance_16k_5k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-06_19-19-37_s1_repair_from43000_hand4_yaw3_slide_clearance_16k_5k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-06_19-19-37_s1_repair_from43000_hand4_yaw3_slide_clearance_16k_5k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-06_19-19-37_s1_repair_from43000_hand4_yaw3_slide_clearance_16k_5k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-07_12-11-26_s1_from43000_vel1_ang15_height1_hand2_16k_5k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-07_12-11-26_s1_from43000_vel1_ang15_height1_hand2_16k_5k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-07_12-11-26_s1_from43000_vel1_ang15_height1_hand2_16k_5k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-07_12-11-26_s1_from43000_vel1_ang15_height1_hand2_16k_5k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-07_12-11-26_s1_from43000_vel1_ang15_height1_hand2_16k_5k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-07_12-11-26_s1_from43000_vel1_ang15_height1_hand2_16k_5k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-07_12-11-26_s1_from43000_vel1_ang15_height1_hand2_16k_5k,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-07_12-11-26_s1_from43000_vel1_ang15_height1_hand2_16k_5k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-07_12-11-26_s1_from43000_vel1_ang15_height1_hand2_16k_5k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-07_12-11-26_s1_from43000_vel1_ang15_height1_hand2_16k_5k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-07_12-11-26_s1_from43000_vel1_ang15_height1_hand2_16k_5k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-07_12-11-26_s1_from43000_vel1_ang15_height1_hand2_16k_5k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-07_12-11-26_s1_from43000_vel1_ang15_height1_hand2_16k_5k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-07_23-42-38_s1_scratch_hand_pose_feet_default_16k_50k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-07_23-42-38_s1_scratch_hand_pose_feet_default_16k_50k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-07_23-42-38_s1_scratch_hand_pose_feet_default_16k_50k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-07_23-42-38_s1_scratch_hand_pose_feet_default_16k_50k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-07_23-42-38_s1_scratch_hand_pose_feet_default_16k_50k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-07_23-42-38_s1_scratch_hand_pose_feet_default_16k_50k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-07_23-42-38_s1_scratch_hand_pose_feet_default_16k_50k,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-07_23-42-38_s1_scratch_hand_pose_feet_default_16k_50k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-07_23-42-38_s1_scratch_hand_pose_feet_default_16k_50k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-07_23-42-38_s1_scratch_hand_pose_feet_default_16k_50k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-07_23-42-38_s1_scratch_hand_pose_feet_default_16k_50k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-07_23-42-38_s1_scratch_hand_pose_feet_default_16k_50k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-07_23-42-38_s1_scratch_hand_pose_feet_default_16k_50k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-08_10-54-15_s1_resume3000_forward_no_heading_vel3_std035_no_clearance_term06_16k_50k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-08_10-54-15_s1_resume3000_forward_no_heading_vel3_std035_no_clearance_term06_16k_50k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-08_10-54-15_s1_resume3000_forward_no_heading_vel3_std035_no_clearance_term06_16k_50k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-08_10-54-15_s1_resume3000_forward_no_heading_vel3_std035_no_clearance_term06_16k_50k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-08_10-54-15_s1_resume3000_forward_no_heading_vel3_std035_no_clearance_term06_16k_50k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-08_10-54-15_s1_resume3000_forward_no_heading_vel3_std035_no_clearance_term06_16k_50k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-08_10-54-15_s1_resume3000_forward_no_heading_vel3_std035_no_clearance_term06_16k_50k,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-08_10-54-15_s1_resume3000_forward_no_heading_vel3_std035_no_clearance_term06_16k_50k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-08_10-54-15_s1_resume3000_forward_no_heading_vel3_std035_no_clearance_term06_16k_50k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-08_10-54-15_s1_resume3000_forward_no_heading_vel3_std035_no_clearance_term06_16k_50k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-08_10-54-15_s1_resume3000_forward_no_heading_vel3_std035_no_clearance_term06_16k_50k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-08_10-54-15_s1_resume3000_forward_no_heading_vel3_std035_no_clearance_term06_16k_50k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-08_10-54-15_s1_resume3000_forward_no_heading_vel3_std035_no_clearance_term06_16k_50k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-08_15-10-20_s1_scratch_forward_footdist_airtime_16k_50k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-08_15-10-20_s1_scratch_forward_footdist_airtime_16k_50k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-08_15-10-20_s1_scratch_forward_footdist_airtime_16k_50k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-08_15-10-20_s1_scratch_forward_footdist_airtime_16k_50k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-08_15-10-20_s1_scratch_forward_footdist_airtime_16k_50k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-08_15-10-20_s1_scratch_forward_footdist_airtime_16k_50k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-08_15-10-20_s1_scratch_forward_footdist_airtime_16k_50k,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-08_15-10-20_s1_scratch_forward_footdist_airtime_16k_50k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-08_15-10-20_s1_scratch_forward_footdist_airtime_16k_50k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-08_15-10-20_s1_scratch_forward_footdist_airtime_16k_50k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-08_15-10-20_s1_scratch_forward_footdist_airtime_16k_50k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-08_15-10-20_s1_scratch_forward_footdist_airtime_16k_50k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-08_15-10-20_s1_scratch_forward_footdist_airtime_16k_50k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-08_15-11-10_s1_resume3000_forward_footdist_airtime_16k_50k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-08_15-11-10_s1_resume3000_forward_footdist_airtime_16k_50k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-08_15-11-10_s1_resume3000_forward_footdist_airtime_16k_50k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-08_15-11-10_s1_resume3000_forward_footdist_airtime_16k_50k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-08_15-11-10_s1_resume3000_forward_footdist_airtime_16k_50k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-08_15-11-10_s1_resume3000_forward_footdist_airtime_16k_50k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-08_15-11-10_s1_resume3000_forward_footdist_airtime_16k_50k,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-08_15-11-10_s1_resume3000_forward_footdist_airtime_16k_50k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-08_15-11-10_s1_resume3000_forward_footdist_airtime_16k_50k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-08_15-11-10_s1_resume3000_forward_footdist_airtime_16k_50k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-08_15-11-10_s1_resume3000_forward_footdist_airtime_16k_50k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-08_15-11-10_s1_resume3000_forward_footdist_airtime_16k_50k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-08_15-11-10_s1_resume3000_forward_footdist_airtime_16k_50k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-09_11-43-07_s1_scratch_gait_bodyyaw_holdbox_16k_50k,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-09_11-43-07_s1_scratch_gait_bodyyaw_holdbox_16k_50k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-09_11-43-07_s1_scratch_gait_bodyyaw_holdbox_16k_50k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-09_11-43-07_s1_scratch_gait_bodyyaw_holdbox_16k_50k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-09_11-43-07_s1_scratch_gait_bodyyaw_holdbox_16k_50k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-09_11-43-07_s1_scratch_gait_bodyyaw_holdbox_16k_50k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-09_11-43-07_s1_scratch_gait_bodyyaw_holdbox_16k_50k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-09_11-43-07_s1_scratch_gait_bodyyaw_holdbox_16k_50k,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-09_11-43-07_s1_scratch_gait_bodyyaw_holdbox_16k_50k,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-09_11-43-07_s1_scratch_gait_bodyyaw_holdbox_16k_50k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-09_11-43-07_s1_scratch_gait_bodyyaw_holdbox_16k_50k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-09_11-43-07_s1_scratch_gait_bodyyaw_holdbox_16k_50k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-09_11-43-07_s1_scratch_gait_bodyyaw_holdbox_16k_50k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-09_11-43-07_s1_scratch_gait_bodyyaw_holdbox_16k_50k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-09_11-43-07_s1_scratch_gait_bodyyaw_holdbox_16k_50k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-09_20-22-31_s1_scratch_gait_pelvis_feetorient_holdbox_16k_50k,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-09_20-22-31_s1_scratch_gait_pelvis_feetorient_holdbox_16k_50k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-09_20-22-31_s1_scratch_gait_pelvis_feetorient_holdbox_16k_50k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-09_20-22-31_s1_scratch_gait_pelvis_feetorient_holdbox_16k_50k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-09_20-22-31_s1_scratch_gait_pelvis_feetorient_holdbox_16k_50k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-09_20-22-31_s1_scratch_gait_pelvis_feetorient_holdbox_16k_50k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-09_20-22-31_s1_scratch_gait_pelvis_feetorient_holdbox_16k_50k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-09_20-22-31_s1_scratch_gait_pelvis_feetorient_holdbox_16k_50k,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-09_20-22-31_s1_scratch_gait_pelvis_feetorient_holdbox_16k_50k,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-09_20-22-31_s1_scratch_gait_pelvis_feetorient_holdbox_16k_50k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-09_20-22-31_s1_scratch_gait_pelvis_feetorient_holdbox_16k_50k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-09_20-22-31_s1_scratch_gait_pelvis_feetorient_holdbox_16k_50k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-09_20-22-31_s1_scratch_gait_pelvis_feetorient_holdbox_16k_50k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-09_20-22-31_s1_scratch_gait_pelvis_feetorient_holdbox_16k_50k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-09_20-22-31_s1_scratch_gait_pelvis_feetorient_holdbox_16k_50k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-09_20-22-44_s0_gait_pelvis_feetorient_16k_5k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-10_07-38-46_s1_fromS0_3000_gait_pelvis_feetorient_holdbox_16k_5k,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-10_07-38-46_s1_fromS0_3000_gait_pelvis_feetorient_holdbox_16k_5k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-10_07-38-46_s1_fromS0_3000_gait_pelvis_feetorient_holdbox_16k_5k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-10_07-38-46_s1_fromS0_3000_gait_pelvis_feetorient_holdbox_16k_5k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-10_07-38-46_s1_fromS0_3000_gait_pelvis_feetorient_holdbox_16k_5k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-10_07-38-46_s1_fromS0_3000_gait_pelvis_feetorient_holdbox_16k_5k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-10_07-38-46_s1_fromS0_3000_gait_pelvis_feetorient_holdbox_16k_5k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-10_07-38-46_s1_fromS0_3000_gait_pelvis_feetorient_holdbox_16k_5k,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-10_07-38-46_s1_fromS0_3000_gait_pelvis_feetorient_holdbox_16k_5k,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-10_07-38-46_s1_fromS0_3000_gait_pelvis_feetorient_holdbox_16k_5k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-10_07-38-46_s1_fromS0_3000_gait_pelvis_feetorient_holdbox_16k_5k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-10_07-38-46_s1_fromS0_3000_gait_pelvis_feetorient_holdbox_16k_5k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-10_07-38-46_s1_fromS0_3000_gait_pelvis_feetorient_holdbox_16k_5k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-10_07-38-46_s1_fromS0_3000_gait_pelvis_feetorient_holdbox_16k_5k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-10_07-38-46_s1_fromS0_3000_gait_pelvis_feetorient_holdbox_16k_5k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-10_16-57-26_s1_from7999_hand4_gait_pelvis_feetorient_holdbox_16k_5k,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-10_16-57-26_s1_from7999_hand4_gait_pelvis_feetorient_holdbox_16k_5k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-10_16-57-26_s1_from7999_hand4_gait_pelvis_feetorient_holdbox_16k_5k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-10_16-57-26_s1_from7999_hand4_gait_pelvis_feetorient_holdbox_16k_5k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-10_16-57-26_s1_from7999_hand4_gait_pelvis_feetorient_holdbox_16k_5k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-10_16-57-26_s1_from7999_hand4_gait_pelvis_feetorient_holdbox_16k_5k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-10_16-57-26_s1_from7999_hand4_gait_pelvis_feetorient_holdbox_16k_5k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-10_16-57-26_s1_from7999_hand4_gait_pelvis_feetorient_holdbox_16k_5k,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-10_16-57-26_s1_from7999_hand4_gait_pelvis_feetorient_holdbox_16k_5k,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-10_16-57-26_s1_from7999_hand4_gait_pelvis_feetorient_holdbox_16k_5k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-10_16-57-26_s1_from7999_hand4_gait_pelvis_feetorient_holdbox_16k_5k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-10_16-57-26_s1_from7999_hand4_gait_pelvis_feetorient_holdbox_16k_5k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-10_16-57-26_s1_from7999_hand4_gait_pelvis_feetorient_holdbox_16k_5k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-10_16-57-26_s1_from7999_hand4_gait_pelvis_feetorient_holdbox_16k_5k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-10_16-57-26_s1_from7999_hand4_gait_pelvis_feetorient_holdbox_16k_5k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-10_17-12-27_s1_from7999_hand8_torso_pelvis_rp_stronger_16k_5k,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-10_17-12-27_s1_from7999_hand8_torso_pelvis_rp_stronger_16k_5k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-10_17-12-27_s1_from7999_hand8_torso_pelvis_rp_stronger_16k_5k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-10_17-12-27_s1_from7999_hand8_torso_pelvis_rp_stronger_16k_5k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-10_17-12-27_s1_from7999_hand8_torso_pelvis_rp_stronger_16k_5k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-10_17-12-27_s1_from7999_hand8_torso_pelvis_rp_stronger_16k_5k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-10_17-12-27_s1_from7999_hand8_torso_pelvis_rp_stronger_16k_5k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-10_17-12-27_s1_from7999_hand8_torso_pelvis_rp_stronger_16k_5k,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-10_17-12-27_s1_from7999_hand8_torso_pelvis_rp_stronger_16k_5k,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-10_17-12-27_s1_from7999_hand8_torso_pelvis_rp_stronger_16k_5k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-10_17-12-27_s1_from7999_hand8_torso_pelvis_rp_stronger_16k_5k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-10_17-12-27_s1_from7999_hand8_torso_pelvis_rp_stronger_16k_5k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-10_17-12-27_s1_from7999_hand8_torso_pelvis_rp_stronger_16k_5k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-10_17-12-27_s1_from7999_hand8_torso_pelvis_rp_stronger_16k_5k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-10_17-12-27_s1_from7999_hand8_torso_pelvis_rp_stronger_16k_5k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-11_18-54-53_s1_from7999_hand4_torso_pelvis_rp_stronger_16k_5k,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-11_18-54-53_s1_from7999_hand4_torso_pelvis_rp_stronger_16k_5k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-11_18-54-53_s1_from7999_hand4_torso_pelvis_rp_stronger_16k_5k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-11_18-54-53_s1_from7999_hand4_torso_pelvis_rp_stronger_16k_5k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-11_18-54-53_s1_from7999_hand4_torso_pelvis_rp_stronger_16k_5k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-11_18-54-53_s1_from7999_hand4_torso_pelvis_rp_stronger_16k_5k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-11_18-54-53_s1_from7999_hand4_torso_pelvis_rp_stronger_16k_5k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-11_18-54-53_s1_from7999_hand4_torso_pelvis_rp_stronger_16k_5k,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-11_18-54-53_s1_from7999_hand4_torso_pelvis_rp_stronger_16k_5k,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-11_18-54-53_s1_from7999_hand4_torso_pelvis_rp_stronger_16k_5k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-11_18-54-53_s1_from7999_hand4_torso_pelvis_rp_stronger_16k_5k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-11_18-54-53_s1_from7999_hand4_torso_pelvis_rp_stronger_16k_5k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-11_18-54-53_s1_from7999_hand4_torso_pelvis_rp_stronger_16k_5k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-11_18-54-53_s1_from7999_hand4_torso_pelvis_rp_stronger_16k_5k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-11_18-54-53_s1_from7999_hand4_torso_pelvis_rp_stronger_16k_5k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-12_19-53-42_holdbox,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-12_19-53-42_holdbox,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-12_19-53-42_holdbox,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-12_19-53-42_holdbox,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-12_19-53-42_holdbox,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-12_19-53-42_holdbox,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-12_19-53-42_holdbox,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-12_19-53-42_holdbox,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-12_19-53-42_holdbox,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-12_19-53-42_holdbox,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-12_19-53-42_holdbox,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-12_19-53-42_holdbox,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-12_19-53-42_holdbox,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-12_19-53-42_holdbox,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-12_19-53-42_holdbox,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-14_12-54-00_s1_from12998_hand8_rp_plus04_16k_50k,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-14_12-54-00_s1_from12998_hand8_rp_plus04_16k_50k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-14_12-54-00_s1_from12998_hand8_rp_plus04_16k_50k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-14_12-54-00_s1_from12998_hand8_rp_plus04_16k_50k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-14_12-54-00_s1_from12998_hand8_rp_plus04_16k_50k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-14_12-54-00_s1_from12998_hand8_rp_plus04_16k_50k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-14_12-54-00_s1_from12998_hand8_rp_plus04_16k_50k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-14_12-54-00_s1_from12998_hand8_rp_plus04_16k_50k,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-14_12-54-00_s1_from12998_hand8_rp_plus04_16k_50k,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-14_12-54-00_s1_from12998_hand8_rp_plus04_16k_50k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-14_12-54-00_s1_from12998_hand8_rp_plus04_16k_50k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-14_12-54-00_s1_from12998_hand8_rp_plus04_16k_50k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-14_12-54-00_s1_from12998_hand8_rp_plus04_16k_50k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-14_12-54-00_s1_from12998_hand8_rp_plus04_16k_50k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-14_12-54-00_s1_from12998_hand8_rp_plus04_16k_50k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-14_12-54-15_s1_from7999_hand4_rp_plus04_16k_50k,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-14_12-54-15_s1_from7999_hand4_rp_plus04_16k_50k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-14_12-54-15_s1_from7999_hand4_rp_plus04_16k_50k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-14_12-54-15_s1_from7999_hand4_rp_plus04_16k_50k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-14_12-54-15_s1_from7999_hand4_rp_plus04_16k_50k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-14_12-54-15_s1_from7999_hand4_rp_plus04_16k_50k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-14_12-54-15_s1_from7999_hand4_rp_plus04_16k_50k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-14_12-54-15_s1_from7999_hand4_rp_plus04_16k_50k,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-14_12-54-15_s1_from7999_hand4_rp_plus04_16k_50k,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-14_12-54-15_s1_from7999_hand4_rp_plus04_16k_50k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-14_12-54-15_s1_from7999_hand4_rp_plus04_16k_50k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-14_12-54-15_s1_from7999_hand4_rp_plus04_16k_50k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-14_12-54-15_s1_from7999_hand4_rp_plus04_16k_50k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-14_12-54-15_s1_from7999_hand4_rp_plus04_16k_50k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-14_12-54-15_s1_from7999_hand4_rp_plus04_16k_50k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-14_21-51-53_s1_from2026-06-10_17-12-2712998,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-14_21-51-53_s1_from2026-06-10_17-12-2712998,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-14_21-51-53_s1_from2026-06-10_17-12-2712998,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-14_21-51-53_s1_from2026-06-10_17-12-2712998,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-14_21-51-53_s1_from2026-06-10_17-12-2712998,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-14_21-51-53_s1_from2026-06-10_17-12-2712998,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-14_21-51-53_s1_from2026-06-10_17-12-2712998,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-14_21-51-53_s1_from2026-06-10_17-12-2712998,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-14_21-51-53_s1_from2026-06-10_17-12-2712998,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-14_21-51-53_s1_from2026-06-10_17-12-2712998,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-14_21-51-53_s1_from2026-06-10_17-12-2712998,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-14_21-51-53_s1_from2026-06-10_17-12-2712998,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-14_21-51-53_s1_from2026-06-10_17-12-2712998,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-14_21-51-53_s1_from2026-06-10_17-12-2712998,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-14_21-51-53_s1_from2026-06-10_17-12-2712998,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-14_21-52-04_s1_from2026-06-10_07-38-467999,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-14_21-52-04_s1_from2026-06-10_07-38-467999,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-14_21-52-04_s1_from2026-06-10_07-38-467999,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-14_21-52-04_s1_from2026-06-10_07-38-467999,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-14_21-52-04_s1_from2026-06-10_07-38-467999,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-14_21-52-04_s1_from2026-06-10_07-38-467999,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-14_21-52-04_s1_from2026-06-10_07-38-467999,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-14_21-52-04_s1_from2026-06-10_07-38-467999,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-14_21-52-04_s1_from2026-06-10_07-38-467999,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-14_21-52-04_s1_from2026-06-10_07-38-467999,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-14_21-52-04_s1_from2026-06-10_07-38-467999,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-14_21-52-04_s1_from2026-06-10_07-38-467999,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-14_21-52-04_s1_from2026-06-10_07-38-467999,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-14_21-52-04_s1_from2026-06-10_07-38-467999,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-14_21-52-04_s1_from2026-06-10_07-38-467999,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-20_22-30-57_s1_base_velocity_scratch,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-20_22-30-57_s1_base_velocity_scratch,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-20_22-30-57_s1_base_velocity_scratch,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-20_22-30-57_s1_base_velocity_scratch,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-20_22-30-57_s1_base_velocity_scratch,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-20_22-30-57_s1_base_velocity_scratch,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-20_22-30-57_s1_base_velocity_scratch,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-20_22-30-57_s1_base_velocity_scratch,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-20_22-30-57_s1_base_velocity_scratch,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-20_22-30-57_s1_base_velocity_scratch,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-20_22-30-57_s1_base_velocity_scratch,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-20_22-30-57_s1_base_velocity_scratch,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-20_22-30-57_s1_base_velocity_scratch,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-20_22-30-57_s1_base_velocity_scratch,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-20_22-30-57_s1_base_velocity_scratch,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-20_22-30-57_s1_base_velocity_scratch,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-21_02-23-53_s1_base_velocity_scratch_16k_10k,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-21_02-23-53_s1_base_velocity_scratch_16k_10k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-21_02-23-53_s1_base_velocity_scratch_16k_10k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-21_02-23-53_s1_base_velocity_scratch_16k_10k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-21_02-23-53_s1_base_velocity_scratch_16k_10k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-21_02-23-53_s1_base_velocity_scratch_16k_10k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-21_02-23-53_s1_base_velocity_scratch_16k_10k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-21_02-23-53_s1_base_velocity_scratch_16k_10k,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-21_02-23-53_s1_base_velocity_scratch_16k_10k,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-21_02-23-53_s1_base_velocity_scratch_16k_10k,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-21_02-23-53_s1_base_velocity_scratch_16k_10k,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-21_02-23-53_s1_base_velocity_scratch_16k_10k,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-21_02-23-53_s1_base_velocity_scratch_16k_10k,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-21_02-23-53_s1_base_velocity_scratch_16k_10k,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-21_02-23-53_s1_base_velocity_scratch_16k_10k,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-21_02-23-53_s1_base_velocity_scratch_16k_10k,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-22_11-26-35_s1_base_velocity_precise,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-22_11-26-35_s1_base_velocity_precise,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-22_11-26-35_s1_base_velocity_precise,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-06-22_11-26-35_s1_base_velocity_precise,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-06-22_11-26-35_s1_base_velocity_precise,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-06-22_11-26-35_s1_base_velocity_precise,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,policy,null,2026-06-22_11-26-35_s1_base_velocity_precise,null,actions
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-06-22_11-26-35_s1_base_velocity_precise,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-22_11-26-35_s1_base_velocity_precise,null,gait_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-06-22_11-26-35_s1_base_velocity_precise,null,base_lin_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-06-22_11-26-35_s1_base_velocity_precise,null,base_ang_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-06-22_11-26-35_s1_base_velocity_precise,null,projected_gravity
+null,coopG1S1,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-06-22_11-26-35_s1_base_velocity_precise,null,velocity_commands
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-06-22_11-26-35_s1_base_velocity_precise,null,joint_pos
+null,coopG1S1,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-06-22_11-26-35_s1_base_velocity_precise,null,joint_vel
+null,coopG1S1,isaaclab.envs.mdp.observations:last_action,critic,null,2026-06-22_11-26-35_s1_base_velocity_precise,null,actions
+null,coopG1S2,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-05-23_14-47-28_s2_fixedpayload_fromS0_50k_gui,null,base_ang_vel
+null,coopG1S2,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-05-23_14-47-28_s2_fixedpayload_fromS0_50k_gui,null,projected_gravity
+null,coopG1S2,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-05-23_14-47-28_s2_fixedpayload_fromS0_50k_gui,null,velocity_commands
+null,coopG1S2,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-05-23_14-47-28_s2_fixedpayload_fromS0_50k_gui,null,joint_pos
+null,coopG1S2,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-05-23_14-47-28_s2_fixedpayload_fromS0_50k_gui,null,joint_vel
+null,coopG1S2,isaaclab.envs.mdp.observations:last_action,policy,null,2026-05-23_14-47-28_s2_fixedpayload_fromS0_50k_gui,null,actions
+null,coopG1S2,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-05-23_14-47-28_s2_fixedpayload_fromS0_50k_gui,null,base_lin_vel
+null,coopG1S2,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-05-23_14-47-28_s2_fixedpayload_fromS0_50k_gui,null,base_ang_vel
+null,coopG1S2,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-05-23_14-47-28_s2_fixedpayload_fromS0_50k_gui,null,projected_gravity
+null,coopG1S2,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-05-23_14-47-28_s2_fixedpayload_fromS0_50k_gui,null,velocity_commands
+null,coopG1S2,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-05-23_14-47-28_s2_fixedpayload_fromS0_50k_gui,null,joint_pos
+null,coopG1S2,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-05-23_14-47-28_s2_fixedpayload_fromS0_50k_gui,null,joint_vel
+null,coopG1S2,isaaclab.envs.mdp.observations:last_action,critic,null,2026-05-23_14-47-28_s2_fixedpayload_fromS0_50k_gui,null,actions
+null,coopG1S2,isaaclab.envs.mdp.observations:base_ang_vel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-05-30_17-25-08_fixed_payload,null,base_ang_vel
+null,coopG1S2,isaaclab.envs.mdp.observations:projected_gravity,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.03, ""n_min"": -0.03, ""operation"": ""add""}",2026-05-30_17-25-08_fixed_payload,null,projected_gravity
+null,coopG1S2,isaaclab.envs.mdp.observations:generated_commands,policy,null,2026-05-30_17-25-08_fixed_payload,null,velocity_commands
+null,coopG1S2,isaaclab.envs.mdp.observations:joint_pos_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 0.01, ""n_min"": -0.01, ""operation"": ""add""}",2026-05-30_17-25-08_fixed_payload,null,joint_pos
+null,coopG1S2,isaaclab.envs.mdp.observations:joint_vel_rel,policy,"{""func"": ""isaaclab.utils.noise.noise_model:uniform_noise"", ""n_max"": 1.5, ""n_min"": -1.5, ""operation"": ""add""}",2026-05-30_17-25-08_fixed_payload,null,joint_vel
+null,coopG1S2,isaaclab.envs.mdp.observations:last_action,policy,null,2026-05-30_17-25-08_fixed_payload,null,actions
+null,coopG1S2,isaaclab.envs.mdp.observations:base_lin_vel,critic,null,2026-05-30_17-25-08_fixed_payload,null,base_lin_vel
+null,coopG1S2,isaaclab.envs.mdp.observations:base_ang_vel,critic,null,2026-05-30_17-25-08_fixed_payload,null,base_ang_vel
+null,coopG1S2,isaaclab.envs.mdp.observations:projected_gravity,critic,null,2026-05-30_17-25-08_fixed_payload,null,projected_gravity
+null,coopG1S2,isaaclab.envs.mdp.observations:generated_commands,critic,null,2026-05-30_17-25-08_fixed_payload,null,velocity_commands
+null,coopG1S2,isaaclab.envs.mdp.observations:joint_pos_rel,critic,null,2026-05-30_17-25-08_fixed_payload,null,joint_pos
+null,coopG1S2,isaaclab.envs.mdp.observations:joint_vel_rel,critic,null,2026-05-30_17-25-08_fixed_payload,null,joint_vel
+null,coopG1S2,isaaclab.envs.mdp.observations:last_action,critic,null,2026-05-30_17-25-08_fixed_payload,null,actions

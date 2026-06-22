@@ -1,0 +1,1124 @@
+diff --git a/isaaclab_nhb/script/rsl_rl/play.py b/isaaclab_nhb/script/rsl_rl/play.py
+index 7e0405d..53b283b 100644
+--- a/isaaclab_nhb/script/rsl_rl/play.py
++++ b/isaaclab_nhb/script/rsl_rl/play.py
+@@ -29,7 +29,7 @@ def _project_path(path: str) -> str:
+ 
+ # Paste the exact checkpoint file here. Directories are intentionally rejected.
+ LOCAL_CHECKPOINT_PATH = _project_path(
+-    "logs/rsl_rl/coopG1S1/2026-06-08_15-11-10_s1_resume3000_forward_footdist_airtime_16k_50k/model_4000.pt"
++    "logs/rsl_rl/coopG1S1/2026-06-21_02-23-53_s1_base_velocity_scratch_16k_10k/model_9999.pt"
+ )
+ 
+ 
+@@ -48,7 +48,7 @@ LOCAL_PLAY_DEFAULTS = {
+         "rel_standing_envs": 0.0,
+     },
+     "reset_base": {
+-        "yaw": (1.57, 1.57),
++        "yaw": (0.0, 0.0),
+         "x": (0.0, 0.0),
+         "y": (0.0, 0.0),
+     },
+diff --git a/isaaclab_nhb/tasks/humanoid/coopG1S0/coopG1S0_env_cfg.py b/isaaclab_nhb/tasks/humanoid/coopG1S0/coopG1S0_env_cfg.py
+index d0b48fe..f609ae8 100644
+--- a/isaaclab_nhb/tasks/humanoid/coopG1S0/coopG1S0_env_cfg.py
++++ b/isaaclab_nhb/tasks/humanoid/coopG1S0/coopG1S0_env_cfg.py
+@@ -25,6 +25,9 @@ from isaaclab_nhb.tasks.humanoid.G1.G1_asset_cfg import (
+     G1_29DOF_ACTION_SCALE,
+ )
+ 
++G1_FOOT_BODY_NAMES = ("left_ankle_roll_link", "right_ankle_roll_link")
++G1_SWING_FOOT_HEIGHT_M = 0.10
++
+ @configclass
+ class CoopG1S0SceneCfg(InteractiveSceneCfg):
+     """Scene for single G1 locomotion."""
+@@ -51,6 +54,9 @@ class CoopG1S0ObsCfg:
+ 
+     @configclass
+     class PolicyCfg(ObsGroup):
++
++        gait_commands = ObsTerm(func=mdp.generated_commands, params={"command_name": "gait_command"})
++
+         base_ang_vel = ObsTerm(
+             func=mdp.base_ang_vel,
+             noise=Unoise(n_min=-0.03, n_max=0.03),
+@@ -94,6 +100,9 @@ class CoopG1S0ObsCfg:
+     
+     @configclass
+     class CriticCfg(ObsGroup):
++
++        gait_commands = ObsTerm(func=mdp.generated_commands, params={"command_name": "gait_command"})
++
+         base_lin_vel = ObsTerm(func=mdp.base_lin_vel)
+ 
+         base_ang_vel = ObsTerm(func=mdp.base_ang_vel)
+@@ -171,6 +180,15 @@ class CoopG1S0CommandsCfg:
+             heading=(-math.pi, math.pi),
+         ),
+     )
++
++    gait_command = mdp_nhb.BipedalGaitCommandCfg(
++        resampling_time_range=(10.0, 10.0),
++        ranges=mdp_nhb.BipedalGaitCommandCfg.Ranges(
++            stance_rate=(0.65, 0.65),
++            bipedal_offset=(0.5, 0.5),
++            gait_frequency=(1.0, 1.0),
++        ),
++    )
+     
+ @configclass
+ class CoopG1S0RewardsCfg:
+@@ -186,11 +204,12 @@ class CoopG1S0RewardsCfg:
+     )
+ 
+     track_ang_vel_z = RewTerm(
+-        func=mdp.track_ang_vel_z_world_exp,
++        func=mdp_nhb.track_ang_vel_z_body_exp,
+         weight=1.5,
+         params={
+             "command_name": "base_velocity",
+             "std": 0.5,
++            "asset_cfg": SceneEntityCfg("robot", body_names="torso_link"),
+         },
+     )
+ 
+@@ -245,6 +264,24 @@ class CoopG1S0RewardsCfg:
+         },
+     )
+ 
++    pelvis_ang_vel = RewTerm(
++        func=mdp_nhb.body_ang_vel_xy_body_exp,
++        weight=0.2,
++        params={
++            "asset_cfg": SceneEntityCfg("robot", body_names="pelvis"),
++            "lambda_exp": 1.0,
++        },
++    )
++
++    upright_pelvis = RewTerm(
++        func=mdp_nhb.body_upright_bonus_exp,
++        weight=0.2,
++        params={
++            "asset_cfg": SceneEntityCfg("robot", body_names="pelvis"),
++            "lambda_exp": 4.0,
++        },
++    )
++
+     joint_vel = RewTerm(func=mdp.joint_vel_l2, weight=-0.001)
+ 
+     joint_acc = RewTerm(func=mdp.joint_acc_l2, weight=-2.5e-7)
+@@ -303,6 +340,41 @@ class CoopG1S0RewardsCfg:
+         },
+     )
+ 
++    gait = RewTerm(
++        func=mdp_nhb.BipedalGaitReward,
++        weight=1.0,
++        params={
++            "left_sensor_cfg": SceneEntityCfg("contact_forces", body_names=G1_FOOT_BODY_NAMES[0]),
++            "right_sensor_cfg": SceneEntityCfg("contact_forces", body_names=G1_FOOT_BODY_NAMES[1]),
++            "left_asset_cfg": SceneEntityCfg("robot", body_names=G1_FOOT_BODY_NAMES[0]),
++            "right_asset_cfg": SceneEntityCfg("robot", body_names=G1_FOOT_BODY_NAMES[1]),
++            "foot_height_tar": G1_SWING_FOOT_HEIGHT_M,
++        },
++    )
++
++    gait_ensure = RewTerm(
++        func=mdp_nhb.BipedalGaitEnsureReward,
++        weight=1.0,
++        params={
++            "left_sensor_cfg": SceneEntityCfg("contact_forces", body_names=G1_FOOT_BODY_NAMES[0]),
++            "right_sensor_cfg": SceneEntityCfg("contact_forces", body_names=G1_FOOT_BODY_NAMES[1]),
++        },
++    )
++
++    feet_orientation = RewTerm(
++        func=mdp_nhb.feet_yaw_alignment_exp,
++        weight=0.5,
++        params={
++            "asset_cfg": SceneEntityCfg(
++                "robot",
++                body_names=list(G1_FOOT_BODY_NAMES),
++                preserve_order=True,
++            ),
++            "reference_asset_cfg": SceneEntityCfg("robot", body_names="pelvis"),
++            "std": 0.5,
++        },
++    )
++
+ @configclass
+ class CoopG1S0TerminationsCfg:
+     """Termination config for single G1 locomotion."""
+diff --git a/isaaclab_nhb/tasks/humanoid/coopG1S1/coopG1S1_env_cfg.py b/isaaclab_nhb/tasks/humanoid/coopG1S1/coopG1S1_env_cfg.py
+index a801899..a3634fb 100644
+--- a/isaaclab_nhb/tasks/humanoid/coopG1S1/coopG1S1_env_cfg.py
++++ b/isaaclab_nhb/tasks/humanoid/coopG1S1/coopG1S1_env_cfg.py
+@@ -1,7 +1,9 @@
+ from isaaclab.managers import RewardTermCfg as RewTerm
+ from isaaclab.managers import SceneEntityCfg
+ from isaaclab.managers import TerminationTermCfg as DoneTerm
++from isaaclab.managers import ObservationTermCfg as ObsTerm
+ from isaaclab.utils import configclass
++from isaaclab.utils.noise import AdditiveUniformNoiseCfg as Unoise
+ 
+ import isaaclab_tasks.manager_based.locomotion.velocity.mdp as mdp
+ import isaaclab_nhb.tasks.mdp_nhb as mdp_nhb
+@@ -14,6 +16,8 @@ from ..coopG1S0.coopG1S0_env_cfg import (
+     CoopG1S0RewardsCfg,
+     CoopG1S0SceneCfg,
+     CoopG1S0TerminationsCfg,
++    G1_FOOT_BODY_NAMES,
++    G1_SWING_FOOT_HEIGHT_M,
+ )
+ 
+ 
+@@ -51,6 +55,25 @@ class CoopG1S1SceneCfg(CoopG1S0SceneCfg):
+     pass
+ 
+ 
++@configclass
++class CoopG1S1ObsCfg(CoopG1S0ObsCfg):
++    """S0 observations plus base linear velocity for the policy."""
++
++    @configclass
++    class PolicyCfg(CoopG1S0ObsCfg.PolicyCfg):
++        base_lin_vel = ObsTerm(
++            func=mdp.base_lin_vel,
++            noise=Unoise(n_min=-0.03, n_max=0.03),
++        )
++        base_ang_vel = ObsTerm(
++            func=mdp.base_ang_vel,
++            noise=Unoise(n_min=-0.03, n_max=0.03),
++        )
++
++    policy: PolicyCfg = PolicyCfg()
++    critic: CoopG1S0ObsCfg.CriticCfg = CoopG1S0ObsCfg.CriticCfg()
++
++
+ @configclass
+ class CoopG1S1EventCfg(CoopG1S0EventCfg):
+     """S0 reset events only; S1 has no payload attachment."""
+@@ -69,7 +92,7 @@ class CoopG1S1CommandsCfg(CoopG1S0CommandsCfg):
+         rel_heading_envs=0.0,
+         heading_command=False,
+         heading_control_stiffness=0.5,
+-        debug_vis=True,
++        debug_vis=False,
+         ranges=mdp.UniformVelocityCommandCfg.Ranges(
+             lin_vel_x=(0.25, 0.4),
+             lin_vel_y=(0.0, 0.0),
+@@ -93,12 +116,41 @@ class CoopG1S1RewardsCfg(CoopG1S0RewardsCfg):
+         },
+     )
+ 
++    track_lin_vel_xy_fine = RewTerm(
++        func=mdp.track_lin_vel_xy_yaw_frame_exp,
++        weight=3.0,
++        params={
++            "command_name": "base_velocity",
++            "std": 0.10,
++        },
++    )
++
++    # 已经在body坐标系下
+     track_ang_vel_z = RewTerm(
+-        func=mdp.track_ang_vel_z_world_exp,
+-        weight=0.2,
++        func=mdp_nhb.track_ang_vel_z_body_exp,
++        weight=1.5,
+         params={
+             "command_name": "base_velocity",
+             "std": 0.5,
++            "asset_cfg": SceneEntityCfg("robot", body_names="torso_link"),
++        },
++    )
++
++    torso_ang_vel = RewTerm(
++        func=mdp_nhb.body_ang_vel_xy_body_exp,
++        weight=0.8,
++        params={
++            "asset_cfg": SceneEntityCfg("robot", body_names="torso_link"),
++            "lambda_exp": 1.0,
++        },
++    )
++
++    upright_torso = RewTerm(
++        func=mdp_nhb.body_upright_bonus_exp,
++        weight=0.85,
++        params={
++            "asset_cfg": SceneEntityCfg("robot", body_names="torso_link"),
++            "lambda_exp": 4.0,
+         },
+     )
+ 
+@@ -115,6 +167,25 @@ class CoopG1S1RewardsCfg(CoopG1S0RewardsCfg):
+         },
+     )
+ 
++    pelvis_ang_vel = RewTerm(
++        func=mdp_nhb.body_ang_vel_xy_body_exp,
++        weight=0.8,
++        params={
++            "asset_cfg": SceneEntityCfg("robot", body_names="pelvis"),
++            "lambda_exp": 1.0,
++        },
++    )
++
++    upright_pelvis = RewTerm(
++        func=mdp_nhb.body_upright_bonus_exp,
++        weight=0.8,
++        params={
++            "asset_cfg": SceneEntityCfg("robot", body_names="pelvis"),
++            "lambda_exp": 4.0,
++        },
++    )
++
++    # URDF本质上可以修改为fixed
+     torso_pelvis_yaw_alignment = RewTerm(
+         func=mdp_nhb.body_body_yaw_alignment_exp,
+         weight=3.0,
+@@ -131,6 +202,7 @@ class CoopG1S1RewardsCfg(CoopG1S0RewardsCfg):
+         },
+     )
+ 
++
+     torso_pelvis_gravity_alignment = None
+ 
+     arm_target_pose = RewTerm(
+@@ -151,7 +223,7 @@ class CoopG1S1RewardsCfg(CoopG1S0RewardsCfg):
+ 
+     hand_payload_pose = RewTerm(
+         func=mdp_nhb.body_body_rel_pos_exp,
+-        weight=2.0,
++        weight=4.0,
+         params={
+             "asset_cfg": SceneEntityCfg(
+                 "robot",
+@@ -217,8 +289,6 @@ class CoopG1S1RewardsCfg(CoopG1S0RewardsCfg):
+         },
+     )
+ 
+-    feet_contact = None
+-
+     feet_slide = RewTerm(
+         func=mdp.feet_slide,
+         weight=-0.2,
+@@ -233,9 +303,6 @@ class CoopG1S1RewardsCfg(CoopG1S0RewardsCfg):
+             ),
+         },
+     )
+-
+-    feet_clearance = None
+-
+     foot_acc = RewTerm(
+         func=mdp_nhb.foot_acc_l2,
+         weight=-1.0e-5,
+@@ -263,6 +330,29 @@ class CoopG1S1RewardsCfg(CoopG1S0RewardsCfg):
+         },
+     )
+ 
++    ## 4) 足端与步态质量（步态自然性）
++    # 步态相位与触地一致性奖励
++    gait = RewTerm(
++        func=mdp_nhb.BipedalGaitReward,
++        weight=1.0,
++        params={
++            "left_sensor_cfg": SceneEntityCfg("contact_forces", body_names=G1_FOOT_BODY_NAMES[0]),
++            "right_sensor_cfg": SceneEntityCfg("contact_forces", body_names=G1_FOOT_BODY_NAMES[1]),
++            "left_asset_cfg": SceneEntityCfg("robot", body_names=G1_FOOT_BODY_NAMES[0]),
++            "right_asset_cfg": SceneEntityCfg("robot", body_names=G1_FOOT_BODY_NAMES[1]),
++            "foot_height_tar": G1_SWING_FOOT_HEIGHT_M,
++        },
++    )
++    # 步态相位触地一致性约束（用于减少垫步）
++    gait_ensure = RewTerm(
++        func=mdp_nhb.BipedalGaitEnsureReward,
++        weight=1.0,
++        params={
++            "left_sensor_cfg": SceneEntityCfg("contact_forces", body_names=G1_FOOT_BODY_NAMES[0]),
++            "right_sensor_cfg": SceneEntityCfg("contact_forces", body_names=G1_FOOT_BODY_NAMES[1]),
++        },
++    )
++
+ 
+ @configclass
+ class CoopG1S1TerminationsCfg(CoopG1S0TerminationsCfg):
+@@ -293,7 +383,7 @@ class CoopG1S1HoldBoxEnvCfg(CoopG1S0FlatEnvCfg):
+         replicate_physics=False,
+     )
+ 
+-    observations: CoopG1S0ObsCfg = CoopG1S0ObsCfg()
++    observations: CoopG1S1ObsCfg = CoopG1S1ObsCfg()
+     commands: CoopG1S1CommandsCfg = CoopG1S1CommandsCfg()
+     events: CoopG1S1EventCfg = CoopG1S1EventCfg()
+     rewards: CoopG1S1RewardsCfg = CoopG1S1RewardsCfg()
+diff --git a/isaaclab_nhb/tasks/humanoid/coopG1S2/__init__.py b/isaaclab_nhb/tasks/humanoid/coopG1S2/__init__.py
+index 1c0bd81..3428862 100644
+--- a/isaaclab_nhb/tasks/humanoid/coopG1S2/__init__.py
++++ b/isaaclab_nhb/tasks/humanoid/coopG1S2/__init__.py
+@@ -10,5 +10,8 @@ gym.register(
+     kwargs={
+         "env_cfg_entry_point": f"{__name__}.coopG1S2_env_cfg:CoopG1S2FixedPayloadEnvCfg",
+         "rsl_rl_cfg_entry_point": f"{agents.__name__}.coopG1S2_rsl_rl_ppo_cfg:CoopG1S2FixedPayloadPPORunnerCfg",
++        "rsl_rl_residual_cfg_entry_point": (
++            f"{agents.__name__}.coopG1S2_rsl_rl_ppo_cfg:CoopG1S2ResidualPPORunnerCfg"
++        ),
+     },
+ )
+diff --git a/isaaclab_nhb/tasks/humanoid/coopG1S2/agents/coopG1S2_rsl_rl_ppo_cfg.py b/isaaclab_nhb/tasks/humanoid/coopG1S2/agents/coopG1S2_rsl_rl_ppo_cfg.py
+index 0c131da..fae4e23 100644
+--- a/isaaclab_nhb/tasks/humanoid/coopG1S2/agents/coopG1S2_rsl_rl_ppo_cfg.py
++++ b/isaaclab_nhb/tasks/humanoid/coopG1S2/agents/coopG1S2_rsl_rl_ppo_cfg.py
+@@ -1,9 +1,44 @@
++import os
++from pathlib import Path
++
+ from isaaclab.utils import configclass
+ 
++from isaaclab_nhb.tasks.rl_cfg.rl_cfg import RslRlPpoActorCriticResidualCfg
++
+ from ...coopG1S0.agents.coopG1S0_rsl_rl_ppo_cfg import CoopG1S0FlatPPORunnerCfg
+ 
+ 
++DEFAULT_S1_CHECKPOINT = str(
++    Path(__file__).resolve().parents[4]
++    / "logs/rsl_rl/coopG1S1/2026-06-21_02-23-53_s1_base_velocity_scratch_16k_10k/model_9999.pt"
++)
++
++
+ @configclass
+ class CoopG1S2FixedPayloadPPORunnerCfg(CoopG1S0FlatPPORunnerCfg):
+     experiment_name = "coopG1S2"
+     run_name = "fixed_payload"
++
++
++@configclass
++class CoopG1S2ResidualPPORunnerCfg(CoopG1S0FlatPPORunnerCfg):
++    experiment_name = "coopG1S2"
++    run_name = "residual_s1"
++
++    obs_groups = {
++        "policy": ["residual_policy"],
++        "critic": ["critic"],
++        "base_policy": ["base_policy"],
++    }
++
++    policy = RslRlPpoActorCriticResidualCfg(
++        base_policy_checkpoint=os.environ.get("COOP_G1_S1_CHECKPOINT", DEFAULT_S1_CHECKPOINT),
++        base_policy_obs_group="base_policy",
++        residual_scale=0.1,
++        init_noise_std=0.1,
++        actor_obs_normalization=True,
++        critic_obs_normalization=True,
++        actor_hidden_dims=[256, 128, 64],
++        critic_hidden_dims=[512, 256, 128],
++        activation="elu",
++    )
+diff --git a/isaaclab_nhb/tasks/humanoid/coopG1S2/coopG1S2_env.py b/isaaclab_nhb/tasks/humanoid/coopG1S2/coopG1S2_env.py
+index 100f058..696b4ff 100644
+--- a/isaaclab_nhb/tasks/humanoid/coopG1S2/coopG1S2_env.py
++++ b/isaaclab_nhb/tasks/humanoid/coopG1S2/coopG1S2_env.py
+@@ -1,4 +1,5 @@
+ from pxr import Gf, Sdf, UsdGeom, UsdPhysics
++import torch
+ 
+ from isaaclab.envs import ManagerBasedRLEnv
+ 
+@@ -19,6 +20,46 @@ class CoopG1S2Env(ManagerBasedRLEnv):
+         self._d6_anchor_refs = [[] for _ in range(self.num_envs)]
+         self._bind_hands_to_box()
+ 
++    def set_hand_target_command(
++        self,
++        target_force: torch.Tensor,
++        target_position: torch.Tensor,
++        target_quaternion: torch.Tensor,
++        target_linear_velocity: torch.Tensor,
++        target_angular_velocity: torch.Tensor,
++        env_ids: torch.Tensor | list[int] | None = None,
++    ) -> None:
++        """Set upper-level two-hand targets; inputs use shapes ``(N, 2, D)`` in the torso frame."""
++        if env_ids is None:
++            count = self.num_envs
++        else:
++            count = len(env_ids)
++
++        def _flatten(value: torch.Tensor, width: int, name: str) -> torch.Tensor:
++            value = torch.as_tensor(value, dtype=torch.float32, device=self.device)
++            if value.shape == (2, width) and count == 1:
++                value = value.unsqueeze(0)
++            expected = (count, 2, width)
++            if value.shape != expected:
++                raise ValueError(f"Expected {name} shape {expected}, got {tuple(value.shape)}")
++            return value.reshape(count, 2 * width)
++
++        command = torch.cat(
++            (
++                _flatten(target_force, 3, "target_force"),
++                _flatten(target_position, 3, "target_position"),
++                _flatten(target_quaternion, 4, "target_quaternion"),
++                _flatten(target_linear_velocity, 3, "target_linear_velocity"),
++                _flatten(target_angular_velocity, 3, "target_angular_velocity"),
++            ),
++            dim=-1,
++        )
++        self.command_manager.get_term("hand_target").set_command(command, env_ids)
++
++    def clear_hand_target_command(self, env_ids: torch.Tensor | list[int] | None = None) -> None:
++        """Return selected environments to randomized training hand targets."""
++        self.command_manager.get_term("hand_target").clear_command(env_ids)
++
+     def _reset_idx(self, env_ids):
+         super()._reset_idx(env_ids)
+         if hasattr(self, "_d6_anchor_refs"):
+diff --git a/isaaclab_nhb/tasks/humanoid/coopG1S2/coopG1S2_env_cfg.py b/isaaclab_nhb/tasks/humanoid/coopG1S2/coopG1S2_env_cfg.py
+index 5ee9ee6..13a24a6 100644
+--- a/isaaclab_nhb/tasks/humanoid/coopG1S2/coopG1S2_env_cfg.py
++++ b/isaaclab_nhb/tasks/humanoid/coopG1S2/coopG1S2_env_cfg.py
+@@ -1,51 +1,31 @@
+ import isaaclab.sim as sim_utils
+ from isaaclab.assets import RigidObjectCfg
++from isaaclab.managers import ObservationTermCfg as ObsTerm
+ from isaaclab.managers import RewardTermCfg as RewTerm
+ from isaaclab.managers import SceneEntityCfg
+ from isaaclab.utils import configclass
+ 
++import isaaclab_tasks.manager_based.locomotion.velocity.mdp as mdp
+ import isaaclab_nhb.tasks.mdp_nhb as mdp_nhb
+ 
+-from ..coopG1S0.coopG1S0_env_cfg import (
+-    CoopG1S0EventCfg,
+-    CoopG1S0FlatEnvCfg,
+-    CoopG1S0ObsCfg,
+-    CoopG1S0RewardsCfg,
+-    CoopG1S0SceneCfg,
+-    CoopG1S0TerminationsCfg,
++from ..coopG1S0.coopG1S0_env_cfg import CoopG1S0FlatEnvCfg
++from ..coopG1S1.coopG1S1_env_cfg import (
++    CoopG1S1CommandsCfg,
++    CoopG1S1EventCfg,
++    CoopG1S1ObsCfg,
++    CoopG1S1RewardsCfg,
++    CoopG1S1SceneCfg,
++    CoopG1S1TerminationsCfg,
+ )
+ 
+ 
+ FIXED_PAYLOAD_REL_POS = (0.30, 0.0, 0.13)
+ FIXED_PAYLOAD_SIZE = (0.18, 0.55, 0.16)
+-FIXED_PAYLOAD_HALF_SIZE = tuple(size * 0.5 for size in FIXED_PAYLOAD_SIZE)
+-
+-HAND_TARGET_POS = (
+-    (0.30, 0.32, 0.03),
+-    (0.30, -0.32, 0.03),
+-)
+-
+-ARM_CARRY_JOINT_POS = {
+-    "left_shoulder_pitch_joint": 0.30,
+-    "right_shoulder_pitch_joint": 0.30,
+-    "left_shoulder_roll_joint": 0.25,
+-    "right_shoulder_roll_joint": -0.25,
+-    "left_shoulder_yaw_joint": 0.0,
+-    "right_shoulder_yaw_joint": 0.0,
+-    "left_elbow_joint": 0.97,
+-    "right_elbow_joint": 0.97,
+-    "left_wrist_roll_joint": 0.15,
+-    "right_wrist_roll_joint": -0.15,
+-    "left_wrist_pitch_joint": 0.0,
+-    "right_wrist_pitch_joint": 0.0,
+-    "left_wrist_yaw_joint": 0.0,
+-    "right_wrist_yaw_joint": 0.0,
+-}
+ 
+ 
+ @configclass
+-class CoopG1S2SceneCfg(CoopG1S0SceneCfg):
+-    """Scene for hand-attached payload locomotion."""
++class CoopG1S2SceneCfg(CoopG1S1SceneCfg):
++    """S1 robot scene with the hand-attached payload restored for residual training."""
+ 
+     hold_box: RigidObjectCfg = RigidObjectCfg(
+         prim_path="{ENV_REGEX_NS}/HoldBox",
+@@ -61,71 +41,157 @@ class CoopG1S2SceneCfg(CoopG1S0SceneCfg):
+ 
+ 
+ @configclass
+-class CoopG1S2EventCfg(CoopG1S0EventCfg):
+-    """S0 reset events; D6 hand-box attachments are created by CoopG1S2Env."""
++class CoopG1S2ObsCfg:
++    """Separate frozen-base and residual observations; all history is flattened directly into MLPs."""
++
++    @configclass
++    class BasePolicyCfg(CoopG1S1ObsCfg.PolicyCfg):
++        pass
++
++    @configclass
++    class ResidualPolicyCfg(CoopG1S1ObsCfg.PolicyCfg):
++        hand_target = ObsTerm(func=mdp.generated_commands, params={"command_name": "hand_target"})
++        payload_rel_pos = ObsTerm(
++            func=mdp_nhb.asset_rel_pos,
++            params={
++                "target_asset_cfg": SceneEntityCfg("hold_box"),
++                "reference_asset_cfg": SceneEntityCfg("robot", body_names="torso_link"),
++            },
++        )
++        payload_rel_quat = ObsTerm(
++            func=mdp_nhb.asset_rel_quat,
++            params={
++                "target_asset_cfg": SceneEntityCfg("hold_box"),
++                "reference_asset_cfg": SceneEntityCfg("robot", body_names="torso_link"),
++            },
++        )
++        payload_rel_lin_vel = ObsTerm(
++            func=mdp_nhb.asset_rel_lin_vel,
++            params={
++                "target_asset_cfg": SceneEntityCfg("hold_box"),
++                "reference_asset_cfg": SceneEntityCfg("robot", body_names="torso_link"),
++            },
++        )
++        payload_rel_ang_vel = ObsTerm(
++            func=mdp_nhb.asset_rel_ang_vel,
++            params={
++                "target_asset_cfg": SceneEntityCfg("hold_box"),
++                "reference_asset_cfg": SceneEntityCfg("robot", body_names="torso_link"),
++            },
++        )
++        payload_projected_gravity = ObsTerm(
++            func=mdp_nhb.rigid_object_projected_gravity,
++            params={"asset_cfg": SceneEntityCfg("hold_box")},
++        )
++        hand_pos_in_payload = ObsTerm(
++            func=mdp_nhb.body_rel_pos_to_object,
++            params={
++                "asset_cfg": SceneEntityCfg(
++                    "robot",
++                    body_names=["left_rubber_hand", "right_rubber_hand"],
++                    preserve_order=True,
++                ),
++                "object_cfg": SceneEntityCfg("hold_box"),
++            },
++        )
++
++    @configclass
++    class CriticCfg(CoopG1S1ObsCfg.CriticCfg):
++        hand_target = ObsTerm(func=mdp.generated_commands, params={"command_name": "hand_target"})
++        payload_rel_pos = ObsTerm(
++            func=mdp_nhb.asset_rel_pos,
++            params={
++                "target_asset_cfg": SceneEntityCfg("hold_box"),
++                "reference_asset_cfg": SceneEntityCfg("robot", body_names="torso_link"),
++            },
++        )
++        payload_rel_quat = ObsTerm(
++            func=mdp_nhb.asset_rel_quat,
++            params={
++                "target_asset_cfg": SceneEntityCfg("hold_box"),
++                "reference_asset_cfg": SceneEntityCfg("robot", body_names="torso_link"),
++            },
++        )
++        payload_rel_lin_vel = ObsTerm(
++            func=mdp_nhb.asset_rel_lin_vel,
++            params={
++                "target_asset_cfg": SceneEntityCfg("hold_box"),
++                "reference_asset_cfg": SceneEntityCfg("robot", body_names="torso_link"),
++            },
++        )
++        payload_rel_ang_vel = ObsTerm(
++            func=mdp_nhb.asset_rel_ang_vel,
++            params={
++                "target_asset_cfg": SceneEntityCfg("hold_box"),
++                "reference_asset_cfg": SceneEntityCfg("robot", body_names="torso_link"),
++            },
++        )
++        payload_projected_gravity = ObsTerm(
++            func=mdp_nhb.rigid_object_projected_gravity,
++            params={"asset_cfg": SceneEntityCfg("hold_box")},
++        )
++        hand_pos_in_payload = ObsTerm(
++            func=mdp_nhb.body_rel_pos_to_object,
++            params={
++                "asset_cfg": SceneEntityCfg(
++                    "robot",
++                    body_names=["left_rubber_hand", "right_rubber_hand"],
++                    preserve_order=True,
++                ),
++                "object_cfg": SceneEntityCfg("hold_box"),
++            },
++        )
++
++    base_policy: BasePolicyCfg = BasePolicyCfg()
++    residual_policy: ResidualPolicyCfg = ResidualPolicyCfg()
++    critic: CriticCfg = CriticCfg()
+ 
++
++@configclass
++class CoopG1S2EventCfg(CoopG1S1EventCfg):
+     pass
+ 
+ 
+ @configclass
+-class CoopG1S2RewardsCfg(CoopG1S0RewardsCfg):
+-    """S0 locomotion rewards plus weak carry-pose shaping."""
+-
+-    arm_target_pose = RewTerm(
+-        func=mdp_nhb.joint_target_l1,
+-        weight=-0.05,
+-        params={
+-            "asset_cfg": SceneEntityCfg(
+-                "robot",
+-                joint_names=[
+-                    ".*_shoulder_.*_joint",
+-                    ".*_elbow_joint",
+-                    ".*_wrist_.*_joint",
+-                ],
+-            ),
+-            "targets": ARM_CARRY_JOINT_POS,
+-        },
++class CoopG1S2CommandsCfg(CoopG1S1CommandsCfg):
++    hand_target = mdp_nhb.EndEffectorTargetCommandCfg(
++        resampling_time_range=(2.0, 4.0),
++        debug_vis=False,
+     )
+ 
++
++@configclass
++class CoopG1S2RewardsCfg(CoopG1S1RewardsCfg):
++    """S1 locomotion rewards plus command and payload stabilization objectives."""
++
+     hand_payload_pose = RewTerm(
+-        func=mdp_nhb.body_body_rel_pos_exp,
+-        weight=0.15,
++        func=mdp_nhb.body_command_pos_exp,
++        weight=4.0,
+         params={
++            "command_name": "hand_target",
+             "asset_cfg": SceneEntityCfg(
+                 "robot",
+                 body_names=["left_rubber_hand", "right_rubber_hand"],
+                 preserve_order=True,
+             ),
+             "reference_asset_cfg": SceneEntityCfg("robot", body_names="torso_link"),
+-            "target_positions": HAND_TARGET_POS,
+-            "std": 0.18,
++            "std": 0.10,
+         },
+     )
+-
+-    upper_body_box_overlap = RewTerm(
+-        func=mdp_nhb.body_inside_box_penalty,
+-        weight=-0.10,
++    hand_target_velocity = RewTerm(
++        func=mdp_nhb.body_command_lin_vel_exp,
++        weight=0.5,
+         params={
++            "command_name": "hand_target",
+             "asset_cfg": SceneEntityCfg(
+                 "robot",
+-                body_names=[
+-                    "left_rubber_hand",
+-                    "right_rubber_hand",
+-                    "left_wrist_yaw_link",
+-                    "right_wrist_yaw_link",
+-                    "left_wrist_pitch_link",
+-                    "right_wrist_pitch_link",
+-                    "left_elbow_link",
+-                    "right_elbow_link",
+-                ],
++                body_names=["left_rubber_hand", "right_rubber_hand"],
++                preserve_order=True,
+             ),
+             "reference_asset_cfg": SceneEntityCfg("robot", body_names="torso_link"),
+-            "box_center": FIXED_PAYLOAD_REL_POS,
+-            "box_half_size": FIXED_PAYLOAD_HALF_SIZE,
+-            "margin": 0.02,
++            "std": 0.5,
+         },
+     )
+-
+     payload_rel_pose = RewTerm(
+         func=mdp_nhb.object_rel_pos_exp,
+         weight=0.25,
+@@ -136,16 +202,11 @@ class CoopG1S2RewardsCfg(CoopG1S0RewardsCfg):
+             "std": 0.25,
+         },
+     )
+-
+     payload_upright = RewTerm(
+         func=mdp_nhb.object_upright_bonus_exp,
+         weight=0.40,
+-        params={
+-            "object_cfg": SceneEntityCfg("hold_box"),
+-            "lambda_exp": 6.0,
+-        },
++        params={"object_cfg": SceneEntityCfg("hold_box"), "lambda_exp": 6.0},
+     )
+-
+     payload_rel_rot = RewTerm(
+         func=mdp_nhb.object_rel_rot_exp,
+         weight=0.30,
+@@ -156,37 +217,34 @@ class CoopG1S2RewardsCfg(CoopG1S0RewardsCfg):
+             "std": 0.45,
+         },
+     )
+-
+     payload_ang_vel = RewTerm(
+         func=mdp_nhb.object_ang_vel_exp,
+         weight=0.20,
+-        params={
+-            "object_cfg": SceneEntityCfg("hold_box"),
+-            "lambda_exp": 1.5,
+-        },
++        params={"object_cfg": SceneEntityCfg("hold_box"), "lambda_exp": 1.5},
+     )
+-
+     payload_lin_vel_z = RewTerm(
+         func=mdp_nhb.object_lin_vel_z_exp,
+         weight=0.10,
+-        params={
+-            "object_cfg": SceneEntityCfg("hold_box"),
+-            "lambda_exp": 2.0,
+-        },
++        params={"object_cfg": SceneEntityCfg("hold_box"), "lambda_exp": 2.0},
+     )
+ 
+ 
++@configclass
++class CoopG1S2TerminationsCfg(CoopG1S1TerminationsCfg):
++    pass
++
++
+ @configclass
+ class CoopG1S2FixedPayloadEnvCfg(CoopG1S0FlatEnvCfg):
+-    """Single G1 hand-attached payload locomotion task."""
++    """S2 payload task trained by a frozen S1 base actor plus residual MLP."""
+ 
+     scene: CoopG1S2SceneCfg = CoopG1S2SceneCfg(
+         num_envs=4096,
+         env_spacing=2.5,
+         replicate_physics=False,
+     )
+-
+-    observations: CoopG1S0ObsCfg = CoopG1S0ObsCfg()
++    observations: CoopG1S2ObsCfg = CoopG1S2ObsCfg()
++    commands: CoopG1S2CommandsCfg = CoopG1S2CommandsCfg()
+     events: CoopG1S2EventCfg = CoopG1S2EventCfg()
+     rewards: CoopG1S2RewardsCfg = CoopG1S2RewardsCfg()
+-    terminations: CoopG1S0TerminationsCfg = CoopG1S0TerminationsCfg()
++    terminations: CoopG1S2TerminationsCfg = CoopG1S2TerminationsCfg()
+diff --git a/isaaclab_nhb/tasks/mdp_nhb/commands.py b/isaaclab_nhb/tasks/mdp_nhb/commands.py
+index b1ac329..7ad7078 100644
+--- a/isaaclab_nhb/tasks/mdp_nhb/commands.py
++++ b/isaaclab_nhb/tasks/mdp_nhb/commands.py
+@@ -34,6 +34,91 @@ if TYPE_CHECKING:
+     )
+ 
+ 
++# Per hand, all values are expressed in the torso frame. The flattened layout is:
++# force (2 x 3), position (2 x 3), quaternion (2 x 4), linear velocity (2 x 3), angular velocity (2 x 3).
++EE_TARGET_FORCE_SLICE = slice(0, 6)
++EE_TARGET_POSITION_SLICE = slice(6, 12)
++EE_TARGET_QUATERNION_SLICE = slice(12, 20)
++EE_TARGET_LINEAR_VELOCITY_SLICE = slice(20, 26)
++EE_TARGET_ANGULAR_VELOCITY_SLICE = slice(26, 32)
++EE_TARGET_COMMAND_DIM = 32
++
++
++class EndEffectorTargetCommand(CommandTerm):
++    """Two-hand force and SE(3) trajectory command supplied by an upper-level controller."""
++
++    def __init__(self, cfg, env: ManagerBasedRLEnv):
++        super().__init__(cfg, env)
++        self.ee_target_command = torch.zeros(self.num_envs, EE_TARGET_COMMAND_DIM, device=self.device)
++        self._external_override = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
++
++    @property
++    def command(self) -> torch.Tensor:
++        return self.ee_target_command
++
++    def set_command(
++        self,
++        command: torch.Tensor,
++        env_ids: Sequence[int] | torch.Tensor | None = None,
++    ) -> None:
++        """Persistently override sampled commands, normally from the upper-level controller."""
++        if env_ids is None:
++            env_ids = torch.arange(self.num_envs, device=self.device)
++        else:
++            env_ids = torch.as_tensor(env_ids, device=self.device, dtype=torch.long)
++        command = torch.as_tensor(command, device=self.device, dtype=self.ee_target_command.dtype)
++        if command.ndim == 1:
++            command = command.unsqueeze(0)
++        expected_shape = (len(env_ids), EE_TARGET_COMMAND_DIM)
++        if command.shape != expected_shape:
++            raise ValueError(f"Expected end-effector command shape {expected_shape}, got {tuple(command.shape)}")
++        self.ee_target_command[env_ids] = command
++        self._external_override[env_ids] = True
++
++    def clear_command(self, env_ids: Sequence[int] | torch.Tensor | None = None) -> None:
++        """Return selected environments to randomized training commands."""
++        if env_ids is None:
++            env_ids = torch.arange(self.num_envs, device=self.device)
++        else:
++            env_ids = torch.as_tensor(env_ids, device=self.device, dtype=torch.long)
++        self._external_override[env_ids] = False
++        self._resample_command(env_ids)
++
++    def _update_metrics(self):
++        pass
++
++    def _update_command(self):
++        pass
++
++    def _resample_command(self, env_ids: Sequence[int]):
++        env_ids = torch.as_tensor(env_ids, device=self.device, dtype=torch.long)
++        env_ids = env_ids[~self._external_override[env_ids]]
++        if len(env_ids) == 0:
++            return
++
++        count = len(env_ids)
++        command = self.ee_target_command[env_ids]
++        nominal_force = torch.tensor(self.cfg.nominal_force, device=self.device).repeat(2)
++        force_noise = torch.empty(count, 6, device=self.device).uniform_(*self.cfg.force_delta_range)
++        command[:, EE_TARGET_FORCE_SLICE] = nominal_force + force_noise
++
++        nominal_position = torch.tensor(self.cfg.nominal_positions, device=self.device).reshape(1, 2, 3)
++        position_delta = torch.tensor(self.cfg.position_delta, device=self.device).reshape(1, 1, 3)
++        position_noise = 2.0 * torch.rand(count, 2, 3, device=self.device) - 1.0
++        command[:, EE_TARGET_POSITION_SLICE] = (nominal_position + position_noise * position_delta).reshape(count, 6)
++
++        roll = torch.empty(count, 2, device=self.device).uniform_(*self.cfg.roll_range)
++        pitch = torch.empty(count, 2, device=self.device).uniform_(*self.cfg.pitch_range)
++        yaw = torch.empty(count, 2, device=self.device).uniform_(*self.cfg.yaw_range)
++        command[:, EE_TARGET_QUATERNION_SLICE] = quat_from_euler_xyz(roll, pitch, yaw).reshape(count, 8)
++        command[:, EE_TARGET_LINEAR_VELOCITY_SLICE] = torch.empty(count, 6, device=self.device).uniform_(
++            *self.cfg.linear_velocity_range
++        )
++        command[:, EE_TARGET_ANGULAR_VELOCITY_SLICE] = torch.empty(count, 6, device=self.device).uniform_(
++            *self.cfg.angular_velocity_range
++        )
++
++
+ class BipedalGaitCommand(CommandTerm):
+ 
+     cfg: BipedalGaitCommandCfg
+diff --git a/isaaclab_nhb/tasks/mdp_nhb/commands_cfg.py b/isaaclab_nhb/tasks/mdp_nhb/commands_cfg.py
+index 1edba16..6aa2767 100644
+--- a/isaaclab_nhb/tasks/mdp_nhb/commands_cfg.py
++++ b/isaaclab_nhb/tasks/mdp_nhb/commands_cfg.py
+@@ -6,6 +6,7 @@ from isaaclab.managers import CommandTermCfg
+ from dataclasses import MISSING
+ from .commands import (
+     BipedalGaitCommand, 
++    EndEffectorTargetCommand,
+     QuadrupedGaitCommand, 
+     MimicCommand, 
+     QuadrupedMimicCommand,
+@@ -40,6 +41,25 @@ class BipedalGaitCommandCfg(CommandTermCfg):
+ 
+     ranges: Ranges = MISSING
+ 
++
++@configclass
++class EndEffectorTargetCommandCfg(CommandTermCfg):
++    """Two-hand target force and trajectory command in the torso frame."""
++
++    class_type: type = EndEffectorTargetCommand
++    nominal_force: tuple[float, float, float] = (0.0, 0.0, 0.25)
++    nominal_positions: tuple[tuple[float, float, float], tuple[float, float, float]] = (
++        (0.350404, 0.220756, 0.086077),
++        (0.350387, -0.220792, 0.086075),
++    )
++    position_delta: tuple[float, float, float] = (0.03, 0.03, 0.03)
++    force_delta_range: tuple[float, float] = (-0.10, 0.10)
++    roll_range: tuple[float, float] = (-0.10, 0.10)
++    pitch_range: tuple[float, float] = (-0.10, 0.10)
++    yaw_range: tuple[float, float] = (-0.10, 0.10)
++    linear_velocity_range: tuple[float, float] = (-0.10, 0.10)
++    angular_velocity_range: tuple[float, float] = (-0.20, 0.20)
++
+ @configclass
+ class QuadrupedGaitCommandCfg(CommandTermCfg):
+     """四足步态命令值配置类"""
+@@ -104,4 +124,3 @@ class TerrainAdaptiveVelocityCommandCfg(UniformVelocityCommandCfg):
+     例如: 0.83表示在最高难度时排除±83%以内的速度，只采样剩余的17%高速区域
+     设置为0.0表示不排除任何区域（难度对采样范围无影响）
+     """
+-
+diff --git a/isaaclab_nhb/tasks/mdp_nhb/observations.py b/isaaclab_nhb/tasks/mdp_nhb/observations.py
+index ffd699e..88150d4 100644
+--- a/isaaclab_nhb/tasks/mdp_nhb/observations.py
++++ b/isaaclab_nhb/tasks/mdp_nhb/observations.py
+@@ -150,6 +150,29 @@ def asset_rel_pos(
+ 
+     return math_utils.quat_apply_inverse(ref_quat_w, target_pos_w - ref_pos_w)
+ 
++
++def asset_rel_quat(
++    env: ManagerBasedEnv,
++    target_asset_cfg: SceneEntityCfg,
++    reference_asset_cfg: SceneEntityCfg,
++) -> torch.Tensor:
++    """Target asset orientation relative to the reference asset frame."""
++    target = env.scene[target_asset_cfg.name]
++    reference = env.scene[reference_asset_cfg.name]
++
++    if isinstance(target, Articulation):
++        target_quat_w = target.data.body_link_quat_w[:, target_asset_cfg.body_ids[0]]
++    else:
++        target_quat_w = target.data.root_quat_w
++
++    if isinstance(reference, Articulation):
++        ref_quat_w = reference.data.body_link_quat_w[:, reference_asset_cfg.body_ids[0]]
++    else:
++        ref_quat_w = reference.data.root_quat_w
++
++    rel_quat = math_utils.quat_mul(math_utils.quat_inv(ref_quat_w), target_quat_w)
++    return math_utils.quat_unique(rel_quat)
++
+ def asset_rel_lin_vel(
+     env: ManagerBasedEnv,
+     target_asset_cfg: SceneEntityCfg,
+diff --git a/isaaclab_nhb/tasks/mdp_nhb/rewards.py b/isaaclab_nhb/tasks/mdp_nhb/rewards.py
+index 56614c0..7057be0 100644
+--- a/isaaclab_nhb/tasks/mdp_nhb/rewards.py
++++ b/isaaclab_nhb/tasks/mdp_nhb/rewards.py
+@@ -19,7 +19,7 @@ from isaaclab.sensors import Camera, Imu, RayCaster, RayCasterCamera, TiledCamer
+ from isaaclab.markers import VisualizationMarkers, VisualizationMarkersCfg
+ from isaaclab.markers.config import RAY_CASTER_MARKER_CFG, GREEN_ARROW_X_MARKER_CFG
+ from isaaclab.utils.math import quat_from_euler_xyz
+-from .commands import MotionCommand
++from .commands import EE_TARGET_LINEAR_VELOCITY_SLICE, EE_TARGET_POSITION_SLICE, MotionCommand
+ import math
+ 
+ if TYPE_CHECKING:
+@@ -123,6 +123,21 @@ def track_ang_vel_z_world_expabs(
+     ang_vel_error = torch.abs(env.command_manager.get_command(command_name)[:, 2] - asset.data.root_ang_vel_w[:, 2])
+     return torch.exp(-ang_vel_error / std**2)
+ 
++
++def track_ang_vel_z_body_exp(
++    env: ManagerBasedRLEnv,
++    command_name: str,
++    std: float,
++    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
++) -> torch.Tensor:
++    """Track yaw angular velocity of a selected body link in its local body frame."""
++    asset: Articulation = env.scene[asset_cfg.name]
++    body_quat_w = asset.data.body_link_quat_w[:, asset_cfg.body_ids[0], :]
++    body_ang_vel_w = asset.data.body_link_ang_vel_w[:, asset_cfg.body_ids[0], :]
++    body_ang_vel_b = quat_apply_inverse(body_quat_w, body_ang_vel_w)
++    ang_vel_error = torch.square(env.command_manager.get_command(command_name)[:, 2] - body_ang_vel_b[:, 2])
++    return torch.exp(-ang_vel_error / std**2)
++
+ ########################### 危险落足惩罚 ###################################
+ 
+ class TerrainEdgePenalty(ManagerTermBase):
+@@ -1343,7 +1358,7 @@ def biped_distance_y_l2(
+     # 计算超出范围的部分
+     d_min = torch.clamp(link_y_distance - min_dist, -1.0, 0)
+     d_max = torch.clamp(link_y_distance - max_dist, 0, 1.0)
+-    
++
+     return (torch.abs(d_min) + torch.abs(d_max)) / 2
+ 
+ ########################### MSE直接模仿数据集 ###################################
+@@ -1620,6 +1635,19 @@ def body_ang_vel_xy_exp(
+     ang_vel_xy = asset.data.body_link_ang_vel_w[:, asset_cfg.body_ids[0], :2]
+     return torch.exp(-lambda_exp * torch.sum(torch.square(ang_vel_xy), dim=1))
+ 
++
++def body_ang_vel_xy_body_exp(
++        env: ManagerBasedRLEnv,
++        asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
++        lambda_exp: float = 1.0,
++    ) -> torch.Tensor:
++    """Reward keeping selected body roll/pitch angular velocity near zero in its local body frame."""
++    asset: Articulation = env.scene[asset_cfg.name]
++    body_quat_w = asset.data.body_link_quat_w[:, asset_cfg.body_ids[0], :]
++    body_ang_vel_w = asset.data.body_link_ang_vel_w[:, asset_cfg.body_ids[0], :]
++    body_ang_vel_b = quat_apply_inverse(body_quat_w, body_ang_vel_w)
++    return torch.exp(-lambda_exp * torch.sum(torch.square(body_ang_vel_b[:, :2]), dim=1))
++
+ def body_upright_bonus_exp(
+         env: ManagerBasedRLEnv,
+         asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+@@ -1801,6 +1829,54 @@ def body_body_rel_pos_exp(
+     pos_error = torch.sum(torch.square(rel_pos - target), dim=(1, 2))
+     return torch.exp(-pos_error / std**2)
+ 
++
++def body_command_pos_exp(
++        env: ManagerBasedRLEnv,
++        command_name: str,
++        asset_cfg: SceneEntityCfg,
++        reference_asset_cfg: SceneEntityCfg,
++        std: float = 0.2,
++    ) -> torch.Tensor:
++    """Track the two hand positions contained in an end-effector target command."""
++    asset: Articulation = env.scene[asset_cfg.name]
++    reference: Articulation = env.scene[reference_asset_cfg.name]
++    body_pos_w = asset.data.body_link_pos_w[:, asset_cfg.body_ids]
++    ref_pos_w = reference.data.body_link_pos_w[:, reference_asset_cfg.body_ids[0]]
++    ref_quat_w = reference.data.body_link_quat_w[:, reference_asset_cfg.body_ids[0]]
++    num_bodies = body_pos_w.shape[1]
++    rel_pos = math_utils.quat_apply_inverse(
++        ref_quat_w.unsqueeze(1).expand(-1, num_bodies, -1).reshape(-1, 4),
++        (body_pos_w - ref_pos_w.unsqueeze(1)).reshape(-1, 3),
++    ).reshape(env.num_envs, num_bodies, 3)
++    target = env.command_manager.get_command(command_name)[:, EE_TARGET_POSITION_SLICE].reshape(
++        env.num_envs, num_bodies, 3
++    )
++    return torch.exp(-torch.sum(torch.square(rel_pos - target), dim=(1, 2)) / std**2)
++
++
++def body_command_lin_vel_exp(
++        env: ManagerBasedRLEnv,
++        command_name: str,
++        asset_cfg: SceneEntityCfg,
++        reference_asset_cfg: SceneEntityCfg,
++        std: float = 0.5,
++    ) -> torch.Tensor:
++    """Track two hand linear-velocity targets in the reference body frame."""
++    asset: Articulation = env.scene[asset_cfg.name]
++    reference: Articulation = env.scene[reference_asset_cfg.name]
++    body_vel_w = asset.data.body_link_lin_vel_w[:, asset_cfg.body_ids]
++    ref_vel_w = reference.data.body_link_lin_vel_w[:, reference_asset_cfg.body_ids[0]]
++    ref_quat_w = reference.data.body_link_quat_w[:, reference_asset_cfg.body_ids[0]]
++    num_bodies = body_vel_w.shape[1]
++    rel_vel = math_utils.quat_apply_inverse(
++        ref_quat_w.unsqueeze(1).expand(-1, num_bodies, -1).reshape(-1, 4),
++        (body_vel_w - ref_vel_w.unsqueeze(1)).reshape(-1, 3),
++    ).reshape(env.num_envs, num_bodies, 3)
++    target = env.command_manager.get_command(command_name)[:, EE_TARGET_LINEAR_VELOCITY_SLICE].reshape(
++        env.num_envs, num_bodies, 3
++    )
++    return torch.exp(-torch.sum(torch.square(rel_vel - target), dim=(1, 2)) / std**2)
++
+ def body_inside_box_penalty(
+         env: ManagerBasedRLEnv,
+         asset_cfg: SceneEntityCfg,
+diff --git a/isaaclab_nhb/tasks/rl_cfg/rl_cfg.py b/isaaclab_nhb/tasks/rl_cfg/rl_cfg.py
+index 99f7a26..93c2e6f 100644
+--- a/isaaclab_nhb/tasks/rl_cfg/rl_cfg.py
++++ b/isaaclab_nhb/tasks/rl_cfg/rl_cfg.py
+@@ -176,3 +176,18 @@ class RslRlPpoActorCriticTransformerCfg(RslRlPpoActorCriticCfg):
+ 
+     transformer_dropout: float = 0.0
+     """Transformer dropout"""
++
++
++@configclass
++class RslRlPpoActorCriticResidualCfg(RslRlPpoActorCriticCfg):
++    """Configuration for a frozen base policy plus a trainable residual policy."""
++
++    class_name: str = "ActorCriticResidual"
++    base_policy_checkpoint: str = ""
++    base_policy_obs_group: str = "base_policy"
++    residual_scale: float = 0.1
++    base_actor_hidden_dims: list[int] = [512, 256, 128]
++    base_critic_hidden_dims: list[int] = [512, 256, 128]
++    base_activation: str = "elu"
++    base_actor_obs_normalization: bool = True
++    base_critic_obs_normalization: bool = True

@@ -1,0 +1,7 @@
+stage,run,training_type,num_envs,command_x,base_lin_vel_obs,track_weight,track_std,fine_weight,fine_std,hand_weight,torso_ang_weight,pelvis_ang_weight,final_xy_velocity_error,final_mean_reward,status,interpretation
+S1,2026-05-28_19-29-28_s1_height2_carrypose_fromS0_50k_headless,resume,4096,"[0.0,0.4]",false,2.0,0.5,,,1.25,0.2,,0.0332988,136.7549,completed,"早期携物姿态基线；命令范围包含站立，不能与强制前行实验直接比较"
+S1,2026-06-03_08-19-24_s1_fromMay30_92599_vel10_hand8_cfg_16k_5k,resume,16384,"[0.25,0.4]",false,10.0,0.5,,,8.0,0.2,,0.0478352,427.0406,completed,"高速度与手部权重的继续训练"
+S1,2026-06-08_15-10-20_s1_scratch_forward_footdist_airtime_16k_50k,scratch,16384,"[0.25,0.4]",false,5.0,0.35,,,2.0,0.2,,0.1061722,272.1980,partial,"从头训练并加入足距/腾空目标"
+S1,2026-06-09_20-22-31_s1_scratch_gait_pelvis_feetorient_holdbox_16k_50k,scratch,16384,"[0.25,0.4]",false,5.0,0.35,,,2.0,0.2,0.2,0.0420010,344.6110,partial,"当前关键旧基线；步态、骨盆和足部朝向组合"
+S1,2026-06-21_02-23-53_s1_base_velocity_scratch_16k_10k,scratch,16384,"[0.25,0.4]",true,5.0,0.35,,,4.0,0.8,0.8,0.0728374,453.8049,completed,"Policy 加入机体线速度；同时增强手部和稳定奖励，非单变量消融"
+S1,2026-06-22_11-26-35_s1_base_velocity_precise,resume,16384,"[0.25,0.4]",true,5.0,0.35,3.0,0.1,4.0,0.8,0.8,0.0752873,466.6463,preliminary,"从 model_9999 加精细速度奖励的短程继续训练；采集时仅阶段性结果"
