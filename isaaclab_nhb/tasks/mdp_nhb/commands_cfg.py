@@ -7,6 +7,7 @@ from dataclasses import MISSING
 from .commands import (
     BipedalGaitCommand, 
     EndEffectorTargetCommand,
+    TwoHandCsvReferenceCommand,
     QuadrupedGaitCommand, 
     MimicCommand, 
     QuadrupedMimicCommand,
@@ -59,6 +60,23 @@ class EndEffectorTargetCommandCfg(CommandTermCfg):
     yaw_range: tuple[float, float] = (-0.10, 0.10)
     linear_velocity_range: tuple[float, float] = (-0.10, 0.10)
     angular_velocity_range: tuple[float, float] = (-0.20, 0.20)
+
+
+@configclass
+class TwoHandCsvReferenceCommandCfg(CommandTermCfg):
+    """Configuration for synchronized two-hand trajectory/wrench replay."""
+
+    class_type: type = TwoHandCsvReferenceCommand
+    data_path: str = MISSING
+    dataset_dt: float = 0.005
+    preview_steps: int = 0
+    asset_name: str = "robot"
+    reference_body_name: str = "torso_link"
+    hand_body_names: tuple[str, str] = ("left_rubber_hand", "right_rubber_hand")
+    hand_anchor_offsets: tuple[tuple[float, float, float], tuple[float, float, float]] = (
+        (0.05361310808, -0.00295905240, 0.00215413091),
+        (0.05361310808, 0.00295905240, 0.00215413091),
+    )
 
 @configclass
 class QuadrupedGaitCommandCfg(CommandTermCfg):

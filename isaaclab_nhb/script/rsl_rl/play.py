@@ -13,6 +13,7 @@ import os
 import argparse
 import sys
 
+
 from isaaclab.app import AppLauncher
 import isaaclab_nhb 
 
@@ -87,6 +88,30 @@ parser.add_argument(
 parser.add_argument("--csv_export", action="store_true", default=False, help="Export data to CSV.")
 parser.add_argument("--amp_stats", action="store_true", default=True, help="Enable AMP data statistics collection and output.")
 parser.add_argument("--stats_interval", type=int, default=100, help="Interval (in steps) for AMP statistics output.")
+parser.add_argument(
+    "--plot_hand_reference_errors",
+    action="store_true",
+    default=False,
+    help="Plot hand-reference tracking errors live during play.",
+)
+parser.add_argument(
+    "--hand_error_csv",
+    action="store_true",
+    default=False,
+    help="Save per-step hand-reference tracking errors to CSV during play.",
+)
+parser.add_argument(
+    "--hand_error_plot_window",
+    type=int,
+    default=500,
+    help="Number of recent play steps shown in the live hand-error plot.",
+)
+parser.add_argument(
+    "--hand_error_print_interval",
+    type=int,
+    default=0,
+    help="Print hand-reference tracking errors every N play steps. Use 0 to disable.",
+)
 # append RSL-RL cli arguments
 cli_args.add_rsl_rl_args(parser)
 # append AppLauncher cli args
@@ -193,7 +218,9 @@ simulation_app = app_launcher.app
 """Rest everything follows."""
 
 import gymnasium as gym
+import csv
 import os
+import subprocess
 import time
 import torch
 import numpy as np
@@ -238,6 +265,99 @@ import isaaclab_tasks.manager_based.locomotion.velocity.mdp as mdp
 # PLACEHOLDER: Extension template (do not remove this comment)
 
 from isaaclab_nhb.script.rsl_rl.data_logger import DataLogger
+
+
+HAND_REFERENCE_ERROR_KEYS = (
+    "left_pos_error_m",
+    "right_pos_error_m",
+    "mean_pos_error_m",
+    "mean_rot_error_deg",
+    "mean_lin_vel_error_mps",
+    "mean_ang_vel_error_radps",
+)
+
+
+class HandReferenceErrorMonitor:
+    """Live monitor for S2 hand-reference tracking errors during play."""
+
+    def __init__(
+        self,
+        env,
+        log_dir: str,
+        enable_plot: bool = False,
+        enable_csv: bool = False,
+        window: int = 500,
+        print_interval: int = 50,
+    ):
+        self.env = env
+        self.enable_plot = enable_plot
+        self.enable_csv = enable_csv
+        self.window = max(2, int(window))
+        self.print_interval = int(print_interval)
+        self.step_count = 0
+        self.csv_file = None
+        self.csv_writer = None
+        self.csv_path = None
+        self.plot_process = None
+
+        try:
+            self.command_term = env.unwrapped.command_manager.get_term("hand_reference")
+        except Exception as err:
+            raise RuntimeError("Task does not expose a hand_reference command term.") from err
+
+        self.enable_csv = self.enable_csv or self.enable_plot
+        if self.enable_csv:
+            csv_dir = os.path.join(log_dir, "play_hand_reference_errors")
+            os.makedirs(csv_dir, exist_ok=True)
+            timestamp = time.strftime("%Y%m%d_%H%M%S")
+            self.csv_path = os.path.join(csv_dir, f"hand_reference_errors_{timestamp}.csv")
+            self.csv_file = open(self.csv_path, "w", newline="")
+            self.csv_writer = csv.writer(self.csv_file)
+            self.csv_writer.writerow(("step", "time_s", *HAND_REFERENCE_ERROR_KEYS))
+            print(f"[INFO] Saving hand-reference tracking errors to: {self.csv_path}")
+
+        if self.enable_plot:
+            plotter_path = os.path.join(os.path.dirname(__file__), "hand_error_plotter.py")
+            self.plot_process = subprocess.Popen(
+                [
+                    sys.executable,
+                    plotter_path,
+                    "--csv",
+                    self.csv_path,
+                    "--window",
+                    str(self.window),
+                ]
+            )
+            print("[INFO] Live hand-reference error plot enabled in a separate process.")
+
+    def update(self, sim_time_s: float) -> None:
+        latest = self.command_term.latest_tracking_errors
+        values = {}
+        for key in HAND_REFERENCE_ERROR_KEYS:
+            values[key] = float(latest[key][0].detach().cpu())
+
+        if self.csv_writer is not None:
+            self.csv_writer.writerow((self.step_count, sim_time_s, *(values[key] for key in HAND_REFERENCE_ERROR_KEYS)))
+            self.csv_file.flush()
+
+        if self.print_interval > 0 and self.step_count % self.print_interval == 0:
+            print(
+                "[HandRef] "
+                f"step={self.step_count} "
+                f"pos={values['mean_pos_error_m']:.4f} m "
+                f"rot={values['mean_rot_error_deg']:.2f} deg "
+                f"lin_vel={values['mean_lin_vel_error_mps']:.4f} m/s "
+                f"ang_vel={values['mean_ang_vel_error_radps']:.4f} rad/s"
+            )
+
+        self.step_count += 1
+
+    def close(self) -> None:
+        if self.csv_file is not None:
+            self.csv_file.close()
+            print(f"[INFO] Hand-reference tracking errors saved to: {self.csv_path}")
+        if self.plot_process is not None and self.plot_process.poll() is None:
+            self.plot_process.terminate()
 
 
 class RslRlVecEnvWrapperExtraInfo(RslRlVecEnvWrapper):
@@ -451,6 +571,19 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
 
 
     dt = env.unwrapped.step_dt
+    hand_error_monitor = None
+    if args_cli.plot_hand_reference_errors or args_cli.hand_error_csv or args_cli.hand_error_print_interval > 0:
+        try:
+            hand_error_monitor = HandReferenceErrorMonitor(
+                env=env,
+                log_dir=log_dir,
+                enable_plot=args_cli.plot_hand_reference_errors,
+                enable_csv=args_cli.hand_error_csv,
+                window=args_cli.hand_error_plot_window,
+                print_interval=args_cli.hand_error_print_interval,
+            )
+        except RuntimeError as err:
+            print(f"[WARNING] Hand-reference error monitor disabled: {err}")
 
     s1_hand_target_viz = None
     if args_cli.show_s1_hand_targets:
@@ -534,6 +667,9 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
                 )
                 s1_hand_target_viz["left_viz"].visualize(left_target_w)
                 s1_hand_target_viz["right_viz"].visualize(right_target_w)
+
+            if hand_error_monitor is not None:
+                hand_error_monitor.update(timestep * dt)
         
         # Get and print camera position (skip first few steps to ensure physics is initialized)
         if timestep >= initial_steps:
@@ -564,6 +700,8 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
     # close the simulator
     if args_cli.csv_export:
         datalogger.close()
+    if hand_error_monitor is not None:
+        hand_error_monitor.close()
     env.close()
 
 

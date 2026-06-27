@@ -19,7 +19,16 @@ from isaaclab.sensors import Camera, Imu, RayCaster, RayCasterCamera, TiledCamer
 from isaaclab.markers import VisualizationMarkers, VisualizationMarkersCfg
 from isaaclab.markers.config import RAY_CASTER_MARKER_CFG, GREEN_ARROW_X_MARKER_CFG
 from isaaclab.utils.math import quat_from_euler_xyz
-from .commands import EE_TARGET_LINEAR_VELOCITY_SLICE, EE_TARGET_POSITION_SLICE, MotionCommand
+from .commands import (
+    EE_TARGET_LINEAR_VELOCITY_SLICE,
+    EE_TARGET_POSITION_SLICE,
+    HAND_ANGULAR_VELOCITY_SLICE,
+    HAND_LINEAR_VELOCITY_SLICE,
+    HAND_POSITION_SLICE,
+    HAND_QUATERNION_SLICE,
+    HAND_REFERENCE_DIM,
+    MotionCommand,
+)
 import math
 
 if TYPE_CHECKING:
@@ -1876,6 +1885,131 @@ def body_command_lin_vel_exp(
         env.num_envs, num_bodies, 3
     )
     return torch.exp(-torch.sum(torch.square(rel_vel - target), dim=(1, 2)) / std**2)
+
+
+def _two_hand_anchor_state_in_reference(
+        env: ManagerBasedRLEnv,
+        asset_cfg: SceneEntityCfg,
+        reference_asset_cfg: SceneEntityCfg,
+        hand_anchor_offsets: tuple[tuple[float, float, float], tuple[float, float, float]],
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+    """Return two D6 hand-anchor poses and velocities in a reference body frame."""
+    asset: Articulation = env.scene[asset_cfg.name]
+    reference: Articulation = env.scene[reference_asset_cfg.name]
+
+    hand_pos_w = asset.data.body_link_pos_w[:, asset_cfg.body_ids]
+    hand_quat_w = asset.data.body_link_quat_w[:, asset_cfg.body_ids]
+    hand_lin_vel_w = asset.data.body_link_lin_vel_w[:, asset_cfg.body_ids]
+    hand_ang_vel_w = asset.data.body_link_ang_vel_w[:, asset_cfg.body_ids]
+    reference_pos_w = reference.data.body_link_pos_w[:, reference_asset_cfg.body_ids[0]]
+    reference_quat_w = reference.data.body_link_quat_w[:, reference_asset_cfg.body_ids[0]]
+    reference_lin_vel_w = reference.data.body_link_lin_vel_w[:, reference_asset_cfg.body_ids[0]]
+    reference_ang_vel_w = reference.data.body_link_ang_vel_w[:, reference_asset_cfg.body_ids[0]]
+
+    num_hands = hand_pos_w.shape[1]
+    offsets = torch.tensor(hand_anchor_offsets, dtype=hand_pos_w.dtype, device=hand_pos_w.device)
+    offsets = offsets.unsqueeze(0).expand(env.num_envs, -1, -1)
+    offsets_w = math_utils.quat_apply(
+        hand_quat_w.reshape(-1, 4), offsets.reshape(-1, 3)
+    ).reshape(env.num_envs, num_hands, 3)
+    anchor_pos_w = hand_pos_w + offsets_w
+    anchor_lin_vel_w = hand_lin_vel_w + torch.cross(hand_ang_vel_w, offsets_w, dim=-1)
+
+    reference_quat = reference_quat_w.unsqueeze(1).expand(-1, num_hands, -1)
+    anchor_pos_ref = math_utils.quat_apply_inverse(
+        reference_quat.reshape(-1, 4),
+        (anchor_pos_w - reference_pos_w.unsqueeze(1)).reshape(-1, 3),
+    ).reshape(env.num_envs, num_hands, 3)
+    anchor_quat_ref = math_utils.quat_mul(
+        math_utils.quat_inv(reference_quat.reshape(-1, 4)),
+        hand_quat_w.reshape(-1, 4),
+    ).reshape(env.num_envs, num_hands, 4)
+    anchor_lin_vel_ref = math_utils.quat_apply_inverse(
+        reference_quat.reshape(-1, 4),
+        (anchor_lin_vel_w - reference_lin_vel_w.unsqueeze(1)).reshape(-1, 3),
+    ).reshape(env.num_envs, num_hands, 3)
+    anchor_ang_vel_ref = math_utils.quat_apply_inverse(
+        reference_quat.reshape(-1, 4),
+        (hand_ang_vel_w - reference_ang_vel_w.unsqueeze(1)).reshape(-1, 3),
+    ).reshape(env.num_envs, num_hands, 3)
+    return anchor_pos_ref, anchor_quat_ref, anchor_lin_vel_ref, anchor_ang_vel_ref
+
+
+def two_hand_reference_position_exp(
+        env: ManagerBasedRLEnv,
+        command_name: str,
+        asset_cfg: SceneEntityCfg,
+        reference_asset_cfg: SceneEntityCfg,
+        hand_anchor_offsets: tuple[tuple[float, float, float], tuple[float, float, float]],
+        std: float = 0.10,
+    ) -> torch.Tensor:
+    """Track CSV hand-anchor positions in the reference body frame."""
+    actual, _, _, _ = _two_hand_anchor_state_in_reference(
+        env, asset_cfg, reference_asset_cfg, hand_anchor_offsets
+    )
+    target = env.command_manager.get_command(command_name).reshape(
+        env.num_envs, 2, HAND_REFERENCE_DIM
+    )[:, :, HAND_POSITION_SLICE]
+    error = torch.mean(torch.sum(torch.square(actual - target), dim=-1), dim=1)
+    return torch.exp(-error / std**2)
+
+
+def two_hand_reference_orientation_exp(
+        env: ManagerBasedRLEnv,
+        command_name: str,
+        asset_cfg: SceneEntityCfg,
+        reference_asset_cfg: SceneEntityCfg,
+        hand_anchor_offsets: tuple[tuple[float, float, float], tuple[float, float, float]],
+        std: float = 0.30,
+    ) -> torch.Tensor:
+    """Track CSV hand orientations using quaternion geodesic error."""
+    _, actual, _, _ = _two_hand_anchor_state_in_reference(
+        env, asset_cfg, reference_asset_cfg, hand_anchor_offsets
+    )
+    target = env.command_manager.get_command(command_name).reshape(
+        env.num_envs, 2, HAND_REFERENCE_DIM
+    )[:, :, HAND_QUATERNION_SLICE]
+    error = quat_error_magnitude(actual.reshape(-1, 4), target.reshape(-1, 4))
+    error = error.reshape(env.num_envs, 2)
+    return torch.exp(-torch.mean(torch.square(error), dim=1) / std**2)
+
+
+def two_hand_reference_linear_velocity_exp(
+        env: ManagerBasedRLEnv,
+        command_name: str,
+        asset_cfg: SceneEntityCfg,
+        reference_asset_cfg: SceneEntityCfg,
+        hand_anchor_offsets: tuple[tuple[float, float, float], tuple[float, float, float]],
+        std: float = 0.30,
+    ) -> torch.Tensor:
+    """Track CSV hand-anchor linear velocities in the reference body frame."""
+    _, _, actual, _ = _two_hand_anchor_state_in_reference(
+        env, asset_cfg, reference_asset_cfg, hand_anchor_offsets
+    )
+    target = env.command_manager.get_command(command_name).reshape(
+        env.num_envs, 2, HAND_REFERENCE_DIM
+    )[:, :, HAND_LINEAR_VELOCITY_SLICE]
+    error = torch.mean(torch.sum(torch.square(actual - target), dim=-1), dim=1)
+    return torch.exp(-error / std**2)
+
+
+def two_hand_reference_angular_velocity_exp(
+        env: ManagerBasedRLEnv,
+        command_name: str,
+        asset_cfg: SceneEntityCfg,
+        reference_asset_cfg: SceneEntityCfg,
+        hand_anchor_offsets: tuple[tuple[float, float, float], tuple[float, float, float]],
+        std: float = 0.50,
+    ) -> torch.Tensor:
+    """Track CSV hand angular velocities in the reference body frame."""
+    _, _, _, actual = _two_hand_anchor_state_in_reference(
+        env, asset_cfg, reference_asset_cfg, hand_anchor_offsets
+    )
+    target = env.command_manager.get_command(command_name).reshape(
+        env.num_envs, 2, HAND_REFERENCE_DIM
+    )[:, :, HAND_ANGULAR_VELOCITY_SLICE]
+    error = torch.mean(torch.sum(torch.square(actual - target), dim=-1), dim=1)
+    return torch.exp(-error / std**2)
 
 def body_inside_box_penalty(
         env: ManagerBasedRLEnv,

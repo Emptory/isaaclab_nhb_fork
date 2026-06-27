@@ -4,8 +4,8 @@ import torch
 from isaaclab.envs import ManagerBasedRLEnv
 
 
-D6_ENABLE_JOINT = True
-D6_DEBUG_ANCHORS = True
+D6_ENABLE_JOINT = False
+D6_DEBUG_ANCHORS = False
 LEFT_HAND_ANCHOR_LOCAL_POS = (0.05361310808, -0.00295905240, 0.00215413091)
 RIGHT_HAND_ANCHOR_LOCAL_POS = (0.05361310808, 0.00295905240, 0.00215413091)
 BOX_LEFT_ANCHOR_LOCAL_POS = (0.09, 0.22, -0.08)
@@ -13,57 +13,33 @@ BOX_RIGHT_ANCHOR_LOCAL_POS = (0.09, -0.22, -0.08)
 
 
 class CoopG1S2Env(ManagerBasedRLEnv):
-    """S2 env with linear-only D6-style hand payload attachments."""
+    """S2 env with a non-interactive payload reference for residual training/playback."""
 
     def __init__(self, cfg, render_mode: str | None = None, **kwargs):
         super().__init__(cfg, render_mode, **kwargs)
         self._d6_anchor_refs = [[] for _ in range(self.num_envs)]
         self._bind_hands_to_box()
+        self._hand_reference_term = self.command_manager.get_term("hand_reference")
+        self._hand_reference_term.align_to_current_state()
 
-    def set_hand_target_command(
-        self,
-        target_force: torch.Tensor,
-        target_position: torch.Tensor,
-        target_quaternion: torch.Tensor,
-        target_linear_velocity: torch.Tensor,
-        target_angular_velocity: torch.Tensor,
-        env_ids: torch.Tensor | list[int] | None = None,
-    ) -> None:
-        """Set upper-level two-hand targets; inputs use shapes ``(N, 2, D)`` in the torso frame."""
-        if env_ids is None:
-            count = self.num_envs
-        else:
-            count = len(env_ids)
-
-        def _flatten(value: torch.Tensor, width: int, name: str) -> torch.Tensor:
-            value = torch.as_tensor(value, dtype=torch.float32, device=self.device)
-            if value.shape == (2, width) and count == 1:
-                value = value.unsqueeze(0)
-            expected = (count, 2, width)
-            if value.shape != expected:
-                raise ValueError(f"Expected {name} shape {expected}, got {tuple(value.shape)}")
-            return value.reshape(count, 2 * width)
-
-        command = torch.cat(
-            (
-                _flatten(target_force, 3, "target_force"),
-                _flatten(target_position, 3, "target_position"),
-                _flatten(target_quaternion, 4, "target_quaternion"),
-                _flatten(target_linear_velocity, 3, "target_linear_velocity"),
-                _flatten(target_angular_velocity, 3, "target_angular_velocity"),
-            ),
-            dim=-1,
-        )
-        self.command_manager.get_term("hand_target").set_command(command, env_ids)
-
-    def clear_hand_target_command(self, env_ids: torch.Tensor | list[int] | None = None) -> None:
-        """Return selected environments to randomized training hand targets."""
-        self.command_manager.get_term("hand_target").clear_command(env_ids)
+    def step(self, action):
+        # Rewards are computed after physics and before CommandManager.compute().
+        # Advance the reference once here so post-physics tracking uses t + step_dt.
+        self._hand_reference_term.update_from_episode_step(preview_steps=1)
+        return super().step(action)
 
     def _reset_idx(self, env_ids):
         super()._reset_idx(env_ids)
         if hasattr(self, "_d6_anchor_refs"):
             self._sync_d6_anchors(env_ids)
+        if hasattr(self, "_hand_reference_term"):
+            self._hand_reference_term.align_to_current_state(env_ids)
+
+    def refresh_hand_reference_alignment(
+        self, env_ids: torch.Tensor | list[int] | None = None
+    ) -> None:
+        """Realign CSV time zero to the current simulated grasp."""
+        self._hand_reference_term.align_to_current_state(env_ids)
 
     def _bind_hands_to_box(self):
         if not D6_ENABLE_JOINT or not hasattr(self.cfg.scene, "hold_box"):

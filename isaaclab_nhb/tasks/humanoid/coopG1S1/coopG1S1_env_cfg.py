@@ -75,6 +75,13 @@ class CoopG1S1ObsCfg(CoopG1S0ObsCfg):
 
 
 @configclass
+class CoopG1S1LegacyObsCfg(CoopG1S0ObsCfg):
+    """Original 515-D S1 policy observation without base linear velocity."""
+
+    pass
+
+
+@configclass
 class CoopG1S1EventCfg(CoopG1S0EventCfg):
     """S0 reset events only; S1 has no payload attachment."""
 
@@ -388,3 +395,10 @@ class CoopG1S1HoldBoxEnvCfg(CoopG1S0FlatEnvCfg):
     events: CoopG1S1EventCfg = CoopG1S1EventCfg()
     rewards: CoopG1S1RewardsCfg = CoopG1S1RewardsCfg()
     terminations: CoopG1S1TerminationsCfg = CoopG1S1TerminationsCfg()
+
+
+@configclass
+class CoopG1S1LegacyHoldBoxEnvCfg(CoopG1S1HoldBoxEnvCfg):
+    """S1 environment compatible with pre-2026-06-22 515-D checkpoints."""
+
+    observations: CoopG1S1LegacyObsCfg = CoopG1S1LegacyObsCfg()

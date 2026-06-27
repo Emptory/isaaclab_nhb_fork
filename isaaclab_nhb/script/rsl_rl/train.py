@@ -254,7 +254,10 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
 
     # run training
     # 开始训练
-    runner.learn(num_learning_iterations=agent_cfg.max_iterations, init_at_random_ep_len=True)
+    runner.learn(
+        num_learning_iterations=agent_cfg.max_iterations,
+        init_at_random_ep_len=getattr(agent_cfg, "init_at_random_ep_len", True),
+    )
 
     # close the simulator
     env.close()

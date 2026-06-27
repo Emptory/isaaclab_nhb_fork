@@ -4,6 +4,7 @@ import math
 import os
 from collections.abc import Sequence
 from dataclasses import MISSING
+from pathlib import Path
 from typing import TYPE_CHECKING
 import numpy as np
 import torch
@@ -15,6 +16,7 @@ from isaaclab.markers.config import FRAME_MARKER_CFG
 from isaaclab.utils import configclass
 from isaaclab.utils.math import (
     quat_apply,
+    quat_apply_inverse,
     quat_error_magnitude,
     quat_from_euler_xyz,
     quat_inv,
@@ -42,6 +44,338 @@ EE_TARGET_QUATERNION_SLICE = slice(12, 20)
 EE_TARGET_LINEAR_VELOCITY_SLICE = slice(20, 26)
 EE_TARGET_ANGULAR_VELOCITY_SLICE = slice(26, 32)
 EE_TARGET_COMMAND_DIM = 32
+
+# Two-hand CSV layout after removing the time column. Each hand keeps the
+# dataset order: position, quaternion, linear velocity, angular velocity,
+# force, moment.
+TWO_HAND_REFERENCE_DIM = 38
+HAND_REFERENCE_DIM = 19
+HAND_POSITION_SLICE = slice(0, 3)
+HAND_QUATERNION_SLICE = slice(3, 7)
+HAND_LINEAR_VELOCITY_SLICE = slice(7, 10)
+HAND_ANGULAR_VELOCITY_SLICE = slice(10, 13)
+HAND_FORCE_SLICE = slice(13, 16)
+HAND_MOMENT_SLICE = slice(16, 19)
+
+
+class TwoHandCsvReferenceCommand(CommandTerm):
+    """Replay a synchronized two-hand trajectory/wrench CSV as one command.
+
+    The source CSV uses the MATLAB convention:
+    - position, linear velocity, and force are in dataset inertial frame N;
+    - quaternion is scalar-first and maps the payload body frame B to N;
+    - angular velocity and moment are in B.
+
+    The command exposed to the policy converts every field into the current
+    torso frame. This avoids absolute world coordinates and supports parallel
+    environments with different origins.
+    """
+
+    _EXPECTED_HEADERS = (
+        "t",
+        "left_x", "left_y", "left_z",
+        "left_qw", "left_qx", "left_qy", "left_qz",
+        "left_vx", "left_vy", "left_vz",
+        "left_wx", "left_wy", "left_wz",
+        "left_Fx", "left_Fy", "left_Fz",
+        "left_Mx", "left_My", "left_Mz",
+        "right_x", "right_y", "right_z",
+        "right_qw", "right_qx", "right_qy", "right_qz",
+        "right_vx", "right_vy", "right_vz",
+        "right_wx", "right_wy", "right_wz",
+        "right_Fx", "right_Fy", "right_Fz",
+        "right_Mx", "right_My", "right_Mz",
+    )
+
+    def __init__(self, cfg, env: ManagerBasedRLEnv):
+        super().__init__(cfg, env)
+        self.robot: Articulation = env.scene[cfg.asset_name]
+        self._torso_body_id = self.robot.find_bodies(cfg.reference_body_name)[0][0]
+        self._hand_body_ids = self.robot.find_bodies(cfg.hand_body_names, preserve_order=True)[0]
+        if len(self._hand_body_ids) != 2:
+            raise ValueError(f"Expected two hand bodies, found {len(self._hand_body_ids)}")
+
+        csv_path = Path(cfg.data_path).expanduser().resolve()
+        if not csv_path.is_file():
+            raise FileNotFoundError(f"Two-hand reference CSV does not exist: {csv_path}")
+        with csv_path.open("r", encoding="utf-8") as file:
+            headers = tuple(item.strip() for item in file.readline().strip().split(","))
+        if headers != self._EXPECTED_HEADERS:
+            raise ValueError(
+                "Unexpected two-hand CSV columns.\n"
+                f"Expected: {self._EXPECTED_HEADERS}\n"
+                f"Found:    {headers}"
+            )
+
+        # Validate the decimal time column in float64. Reading it directly as
+        # float32 creates an artificial ~1e-6 s jitter near the end of 20 s.
+        csv_data = np.loadtxt(csv_path, delimiter=",", skiprows=1, dtype=np.float64)
+        if csv_data.ndim != 2 or csv_data.shape[1] != 39:
+            raise ValueError(f"Expected CSV shape (T, 39), got {csv_data.shape}")
+        if csv_data.shape[0] < 2:
+            raise ValueError("Two-hand reference CSV must contain at least two samples.")
+        if not np.isfinite(csv_data).all():
+            raise ValueError("Two-hand reference CSV contains NaN or infinite values.")
+
+        times = csv_data[:, 0]
+        time_steps = np.diff(times)
+        dataset_dt = float(np.median(time_steps))
+        if not math.isclose(float(times[0]), 0.0, abs_tol=1.0e-9):
+            raise ValueError(f"Two-hand reference CSV must start at t=0, got t={times[0]}.")
+        if not np.allclose(time_steps, dataset_dt, rtol=1.0e-5, atol=1.0e-7):
+            raise ValueError("Two-hand reference CSV must have a uniform time step.")
+        if abs(dataset_dt - cfg.dataset_dt) > 1.0e-7:
+            raise ValueError(f"CSV dt={dataset_dt} does not match configured dt={cfg.dataset_dt}")
+        if float(times[-1]) + 0.5 * dataset_dt < env.max_episode_length_s:
+            raise ValueError(
+                f"CSV duration={times[-1]} s is shorter than episode duration={env.max_episode_length_s} s."
+            )
+        samples_per_control_step = env.step_dt / dataset_dt
+        if not math.isclose(samples_per_control_step, round(samples_per_control_step), abs_tol=1.0e-7):
+            raise ValueError(
+                f"Environment step_dt={env.step_dt} must be an integer multiple of CSV dt={dataset_dt}."
+            )
+
+        self._dataset_dt = dataset_dt
+        self._reference_data = torch.tensor(
+            csv_data[:, 1:].reshape(-1, 2, HAND_REFERENCE_DIM),
+            device=self.device,
+            dtype=torch.float32,
+        )
+        self._data_initial_midpoint = self._reference_data[0, :, HAND_POSITION_SLICE].mean(dim=0)
+        self._data_initial_quat = self._reference_data[0, 0, HAND_QUATERNION_SLICE]
+        self._hand_anchor_offsets = torch.tensor(
+            cfg.hand_anchor_offsets,
+            device=self.device,
+            dtype=torch.float32,
+        )
+
+        self._reference_command = torch.zeros(
+            self.num_envs, TWO_HAND_REFERENCE_DIM, device=self.device, dtype=torch.float32
+        )
+        self._dataset_to_world_quat = torch.zeros(self.num_envs, 4, device=self.device)
+        self._dataset_to_world_quat[:, 0] = 1.0
+        self._object_to_hand_quat = torch.zeros(self.num_envs, 2, 4, device=self.device)
+        self._object_to_hand_quat[:, :, 0] = 1.0
+        self._initial_anchor_midpoint_w = torch.zeros(self.num_envs, 3, device=self.device)
+        self._is_aligned = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+        self._metric_step_count = torch.zeros(self.num_envs, device=self.device)
+        self.metrics["left_pos_error_m"] = torch.zeros(self.num_envs, device=self.device)
+        self.metrics["right_pos_error_m"] = torch.zeros(self.num_envs, device=self.device)
+        self.metrics["mean_pos_error_m"] = torch.zeros(self.num_envs, device=self.device)
+        self.metrics["mean_rot_error_rad"] = torch.zeros(self.num_envs, device=self.device)
+        self.metrics["mean_rot_error_deg"] = torch.zeros(self.num_envs, device=self.device)
+        self.metrics["mean_lin_vel_error_mps"] = torch.zeros(self.num_envs, device=self.device)
+        self.metrics["mean_ang_vel_error_radps"] = torch.zeros(self.num_envs, device=self.device)
+        self._latest_tracking_errors = {
+            name: torch.zeros_like(value) for name, value in self.metrics.items()
+        }
+
+    @property
+    def command(self) -> torch.Tensor:
+        return self._reference_command
+
+    @property
+    def latest_tracking_errors(self) -> dict[str, torch.Tensor]:
+        return self._latest_tracking_errors
+
+    @property
+    def dataset_dt(self) -> float:
+        return self._dataset_dt
+
+    def align_to_current_state(self, env_ids: Sequence[int] | torch.Tensor | None = None) -> None:
+        """Align the dataset initial grasp to the current simulated hand anchors."""
+        env_ids = self._resolve_env_ids(env_ids)
+        if len(env_ids) == 0:
+            return
+
+        hand_pos_w = self.robot.data.body_link_pos_w[env_ids][:, self._hand_body_ids]
+        hand_quat_w = self.robot.data.body_link_quat_w[env_ids][:, self._hand_body_ids]
+        offsets = self._hand_anchor_offsets.unsqueeze(0).expand(len(env_ids), -1, -1)
+        offset_w = quat_apply(hand_quat_w.reshape(-1, 4), offsets.reshape(-1, 3)).reshape(len(env_ids), 2, 3)
+        self._initial_anchor_midpoint_w[env_ids] = (hand_pos_w + offset_w).mean(dim=1)
+
+        torso_quat_w = self.robot.data.body_link_quat_w[env_ids, self._torso_body_id]
+        data_initial_quat = self._data_initial_quat.unsqueeze(0).expand(len(env_ids), -1)
+        self._dataset_to_world_quat[env_ids] = quat_mul(torso_quat_w, quat_inv(data_initial_quat))
+        initial_object_quat_w = torso_quat_w.unsqueeze(1).expand(-1, 2, -1)
+        self._object_to_hand_quat[env_ids] = quat_mul(
+            quat_inv(initial_object_quat_w.reshape(-1, 4)),
+            hand_quat_w.reshape(-1, 4),
+        ).reshape(len(env_ids), 2, 4)
+        self._is_aligned[env_ids] = True
+        self.update_from_episode_step(env_ids)
+
+    def update_from_episode_step(
+        self,
+        env_ids: Sequence[int] | torch.Tensor | None = None,
+        preview_steps: int | None = None,
+    ) -> None:
+        """Update the command from the episode clock without resampling fields independently."""
+        env_ids = self._resolve_env_ids(env_ids)
+        if len(env_ids) == 0:
+            return
+        missing_alignment = env_ids[~self._is_aligned[env_ids]]
+        if len(missing_alignment) > 0:
+            self.align_to_current_state(missing_alignment)
+            env_ids = env_ids[self._is_aligned[env_ids]]
+            if len(env_ids) == 0:
+                return
+
+        if preview_steps is None:
+            preview_steps = self.cfg.preview_steps
+        target_time = (self._env.episode_length_buf[env_ids] + preview_steps).float() * self._env.step_dt
+        frame_ids = torch.round(target_time / self._dataset_dt).long()
+        frame_ids.clamp_(0, self._reference_data.shape[0] - 1)
+        reference = self._reference_data[frame_ids]
+
+        torso_pos_w = self.robot.data.body_link_pos_w[env_ids, self._torso_body_id]
+        torso_quat_w = self.robot.data.body_link_quat_w[env_ids, self._torso_body_id]
+        torso_lin_vel_w = self.robot.data.body_link_lin_vel_w[env_ids, self._torso_body_id]
+        torso_ang_vel_w = self.robot.data.body_link_ang_vel_w[env_ids, self._torso_body_id]
+        q_wn = self._dataset_to_world_quat[env_ids]
+
+        data_pos = reference[:, :, HAND_POSITION_SLICE]
+        data_quat = reference[:, :, HAND_QUATERNION_SLICE]
+        data_lin_vel = reference[:, :, HAND_LINEAR_VELOCITY_SLICE]
+        data_ang_vel = reference[:, :, HAND_ANGULAR_VELOCITY_SLICE]
+        data_force = reference[:, :, HAND_FORCE_SLICE]
+        data_moment = reference[:, :, HAND_MOMENT_SLICE]
+
+        q_wn_hands = q_wn.unsqueeze(1).expand(-1, 2, -1)
+        object_to_hand_quat = self._object_to_hand_quat[env_ids]
+        torso_quat_hands = torso_quat_w.unsqueeze(1).expand(-1, 2, -1)
+        initial_midpoint_w = self._initial_anchor_midpoint_w[env_ids].unsqueeze(1)
+        data_delta = data_pos - self._data_initial_midpoint.view(1, 1, 3)
+
+        pos_w = initial_midpoint_w + quat_apply(
+            q_wn_hands.reshape(-1, 4), data_delta.reshape(-1, 3)
+        ).reshape(-1, 2, 3)
+        object_quat_w = quat_mul(
+            q_wn_hands.reshape(-1, 4), data_quat.reshape(-1, 4)
+        ).reshape(-1, 2, 4)
+        quat_w = quat_mul(
+            object_quat_w.reshape(-1, 4), object_to_hand_quat.reshape(-1, 4)
+        ).reshape(-1, 2, 4)
+        lin_vel_w = quat_apply(
+            q_wn_hands.reshape(-1, 4), data_lin_vel.reshape(-1, 3)
+        ).reshape(-1, 2, 3)
+        ang_vel_w = quat_apply(
+            object_quat_w.reshape(-1, 4), data_ang_vel.reshape(-1, 3)
+        ).reshape(-1, 2, 3)
+        force_w = quat_apply(q_wn_hands.reshape(-1, 4), data_force.reshape(-1, 3)).reshape(-1, 2, 3)
+        moment_w = quat_apply(
+            object_quat_w.reshape(-1, 4), data_moment.reshape(-1, 3)
+        ).reshape(-1, 2, 3)
+
+        pos_t = quat_apply_inverse(
+            torso_quat_hands.reshape(-1, 4),
+            (pos_w - torso_pos_w.unsqueeze(1)).reshape(-1, 3),
+        ).reshape(-1, 2, 3)
+        quat_t = quat_mul(
+            quat_inv(torso_quat_hands.reshape(-1, 4)),
+            quat_w.reshape(-1, 4),
+        ).reshape(-1, 2, 4)
+        lin_vel_t = quat_apply_inverse(
+            torso_quat_hands.reshape(-1, 4),
+            (lin_vel_w - torso_lin_vel_w.unsqueeze(1)).reshape(-1, 3),
+        ).reshape(-1, 2, 3)
+        ang_vel_t = quat_apply_inverse(
+            torso_quat_hands.reshape(-1, 4),
+            (ang_vel_w - torso_ang_vel_w.unsqueeze(1)).reshape(-1, 3),
+        ).reshape(-1, 2, 3)
+        force_t = quat_apply_inverse(
+            torso_quat_hands.reshape(-1, 4), force_w.reshape(-1, 3)
+        ).reshape(-1, 2, 3)
+        moment_t = quat_apply_inverse(
+            torso_quat_hands.reshape(-1, 4), moment_w.reshape(-1, 3)
+        ).reshape(-1, 2, 3)
+
+        command = torch.cat((pos_t, quat_t, lin_vel_t, ang_vel_t, force_t, moment_t), dim=-1)
+        self._reference_command[env_ids] = command.reshape(len(env_ids), TWO_HAND_REFERENCE_DIM)
+
+    def _resolve_env_ids(self, env_ids: Sequence[int] | torch.Tensor | None) -> torch.Tensor:
+        if env_ids is None or isinstance(env_ids, slice):
+            return torch.arange(self.num_envs, device=self.device, dtype=torch.long)
+        return torch.as_tensor(env_ids, device=self.device, dtype=torch.long)
+
+    def _update_metrics(self):
+        env_ids = torch.nonzero(self._is_aligned, as_tuple=False).flatten()
+        if len(env_ids) == 0:
+            return
+
+        hand_pos_w = self.robot.data.body_link_pos_w[env_ids][:, self._hand_body_ids]
+        hand_quat_w = self.robot.data.body_link_quat_w[env_ids][:, self._hand_body_ids]
+        hand_lin_vel_w = self.robot.data.body_link_lin_vel_w[env_ids][:, self._hand_body_ids]
+        hand_ang_vel_w = self.robot.data.body_link_ang_vel_w[env_ids][:, self._hand_body_ids]
+        torso_pos_w = self.robot.data.body_link_pos_w[env_ids, self._torso_body_id]
+        torso_quat_w = self.robot.data.body_link_quat_w[env_ids, self._torso_body_id]
+        torso_lin_vel_w = self.robot.data.body_link_lin_vel_w[env_ids, self._torso_body_id]
+        torso_ang_vel_w = self.robot.data.body_link_ang_vel_w[env_ids, self._torso_body_id]
+
+        offsets = self._hand_anchor_offsets.unsqueeze(0).expand(len(env_ids), -1, -1)
+        offsets_w = quat_apply(
+            hand_quat_w.reshape(-1, 4),
+            offsets.reshape(-1, 3),
+        ).reshape(len(env_ids), 2, 3)
+        anchor_pos_w = hand_pos_w + offsets_w
+        anchor_lin_vel_w = hand_lin_vel_w + torch.cross(hand_ang_vel_w, offsets_w, dim=-1)
+
+        torso_quat_hands = torso_quat_w.unsqueeze(1).expand(-1, 2, -1)
+        actual_pos_t = quat_apply_inverse(
+            torso_quat_hands.reshape(-1, 4),
+            (anchor_pos_w - torso_pos_w.unsqueeze(1)).reshape(-1, 3),
+        ).reshape(len(env_ids), 2, 3)
+        actual_quat_t = quat_mul(
+            quat_inv(torso_quat_hands.reshape(-1, 4)),
+            hand_quat_w.reshape(-1, 4),
+        ).reshape(len(env_ids), 2, 4)
+        actual_lin_vel_t = quat_apply_inverse(
+            torso_quat_hands.reshape(-1, 4),
+            (anchor_lin_vel_w - torso_lin_vel_w.unsqueeze(1)).reshape(-1, 3),
+        ).reshape(len(env_ids), 2, 3)
+        actual_ang_vel_t = quat_apply_inverse(
+            torso_quat_hands.reshape(-1, 4),
+            (hand_ang_vel_w - torso_ang_vel_w.unsqueeze(1)).reshape(-1, 3),
+        ).reshape(len(env_ids), 2, 3)
+
+        target = self._reference_command[env_ids].reshape(len(env_ids), 2, HAND_REFERENCE_DIM)
+        pos_error = torch.norm(actual_pos_t - target[:, :, HAND_POSITION_SLICE], dim=-1)
+        rot_error = quat_error_magnitude(
+            actual_quat_t.reshape(-1, 4),
+            target[:, :, HAND_QUATERNION_SLICE].reshape(-1, 4),
+        ).reshape(len(env_ids), 2)
+        lin_vel_error = torch.norm(actual_lin_vel_t - target[:, :, HAND_LINEAR_VELOCITY_SLICE], dim=-1)
+        ang_vel_error = torch.norm(actual_ang_vel_t - target[:, :, HAND_ANGULAR_VELOCITY_SLICE], dim=-1)
+        latest_errors = {
+            "left_pos_error_m": pos_error[:, 0],
+            "right_pos_error_m": pos_error[:, 1],
+            "mean_pos_error_m": pos_error.mean(dim=1),
+            "mean_rot_error_rad": rot_error.mean(dim=1),
+            "mean_rot_error_deg": rot_error.mean(dim=1) * (180.0 / math.pi),
+            "mean_lin_vel_error_mps": lin_vel_error.mean(dim=1),
+            "mean_ang_vel_error_radps": ang_vel_error.mean(dim=1),
+        }
+        for name, values in latest_errors.items():
+            self._latest_tracking_errors[name][env_ids] = values
+
+        count = self._metric_step_count[env_ids] + 1.0
+        self._metric_step_count[env_ids] = count
+
+        def _update_running_mean(name: str, values: torch.Tensor) -> None:
+            current = self.metrics[name][env_ids]
+            self.metrics[name][env_ids] = current + (values - current) / count
+
+        for name, values in latest_errors.items():
+            _update_running_mean(name, values)
+
+    def _resample_command(self, env_ids: Sequence[int]):
+        env_ids = self._resolve_env_ids(env_ids)
+        self._is_aligned[env_ids] = False
+        self._metric_step_count[env_ids] = 0.0
+
+    def _update_command(self):
+        self.update_from_episode_step()
 
 
 class EndEffectorTargetCommand(CommandTerm):
