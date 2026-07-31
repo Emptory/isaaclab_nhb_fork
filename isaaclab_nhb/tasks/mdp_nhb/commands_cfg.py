@@ -74,8 +74,8 @@ class TwoHandCsvReferenceCommandCfg(CommandTermCfg):
     reference_body_name: str = "torso_link"
     hand_body_names: tuple[str, str] = ("left_rubber_hand", "right_rubber_hand")
     hand_anchor_offsets: tuple[tuple[float, float, float], tuple[float, float, float]] = (
-        (0.05361310808, -0.00295905240, 0.00215413091),
-        (0.05361310808, 0.00295905240, 0.00215413091),
+        (0.05361310808, -0.01795904764, 0.00216607581),
+        (0.05361310808, 0.01795904764, 0.00214218601),
     )
 
 @configclass

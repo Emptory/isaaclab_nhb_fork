@@ -17,6 +17,7 @@ from isaaclab.utils import configclass
 from isaaclab.utils.math import (
     quat_apply,
     quat_apply_inverse,
+    quat_box_minus,
     quat_error_magnitude,
     quat_from_euler_xyz,
     quat_inv,
@@ -54,6 +55,7 @@ HAND_POSITION_SLICE = slice(0, 3)
 HAND_QUATERNION_SLICE = slice(3, 7)
 HAND_LINEAR_VELOCITY_SLICE = slice(7, 10)
 HAND_ANGULAR_VELOCITY_SLICE = slice(10, 13)
+HAND_KINEMATIC_DIM = HAND_ANGULAR_VELOCITY_SLICE.stop
 HAND_FORCE_SLICE = slice(13, 16)
 HAND_MOMENT_SLICE = slice(16, 19)
 
@@ -117,6 +119,37 @@ class TwoHandCsvReferenceCommand(CommandTerm):
         if not np.isfinite(csv_data).all():
             raise ValueError("Two-hand reference CSV contains NaN or infinite values.")
 
+        # The replay code treats both quaternion columns as the same payload
+        # orientation.  Validate that contract and canonicalize q/-q sign
+        # flips before converting the data to float32.
+        quaternion_slices = (slice(4, 8), slice(23, 27))
+        for hand_name, quaternion_slice in zip(("left", "right"), quaternion_slices):
+            quaternions = csv_data[:, quaternion_slice]
+            norms = np.linalg.norm(quaternions, axis=1)
+            max_norm_error = float(np.max(np.abs(norms - 1.0)))
+            if max_norm_error > 1.0e-3:
+                raise ValueError(
+                    f"{hand_name} quaternion norm error reaches {max_norm_error:.3e}; "
+                    "CSV quaternions must be unit length."
+                )
+            quaternions /= norms[:, None]
+            for sample_id in range(1, quaternions.shape[0]):
+                if float(np.dot(quaternions[sample_id - 1], quaternions[sample_id])) < 0.0:
+                    quaternions[sample_id] *= -1.0
+            csv_data[:, quaternion_slice] = quaternions
+
+        left_quaternions = csv_data[:, quaternion_slices[0]]
+        right_quaternions = csv_data[:, quaternion_slices[1]]
+        orientation_agreement = np.abs(np.sum(left_quaternions * right_quaternions, axis=1))
+        if float(np.min(orientation_agreement)) < 1.0 - 1.0e-4:
+            raise ValueError(
+                "Left/right CSV quaternions do not describe a common rigid payload orientation."
+            )
+
+        hand_separation = np.linalg.norm(csv_data[:, 1:4] - csv_data[:, 20:23], axis=1)
+        if float(np.max(np.abs(hand_separation - hand_separation[0]))) > 1.0e-4:
+            raise ValueError("Left/right CSV contact separation is not rigid across the trajectory.")
+
         times = csv_data[:, 0]
         time_steps = np.diff(times)
         dataset_dt = float(np.median(time_steps))
@@ -142,7 +175,7 @@ class TwoHandCsvReferenceCommand(CommandTerm):
             device=self.device,
             dtype=torch.float32,
         )
-        self._data_initial_midpoint = self._reference_data[0, :, HAND_POSITION_SLICE].mean(dim=0)
+        self._data_initial_positions = self._reference_data[0, :, HAND_POSITION_SLICE].clone()
         self._data_initial_quat = self._reference_data[0, 0, HAND_QUATERNION_SLICE]
         self._hand_anchor_offsets = torch.tensor(
             cfg.hand_anchor_offsets,
@@ -150,30 +183,77 @@ class TwoHandCsvReferenceCommand(CommandTerm):
             dtype=torch.float32,
         )
 
-        self._reference_command = torch.zeros(
-            self.num_envs, TWO_HAND_REFERENCE_DIM, device=self.device, dtype=torch.float32
+        # Keep the sampled trajectory state in world coordinates.  The torso
+        # representation is derived lazily from the *current* simulated torso
+        # state whenever an observation, reward, or metric requests it.  This
+        # avoids comparing a post-physics hand state with a reference that was
+        # transformed through the pre-physics torso frame.
+        self._reference_world = torch.zeros(
+            self.num_envs, 2, HAND_REFERENCE_DIM, device=self.device, dtype=torch.float32
         )
+        # ObservationManager may query term shapes before the first reset.
+        # Keep that temporary placeholder a valid rotation; _reset_idx replaces
+        # the full state with the reset-aligned CSV sample before rollout.
+        self._reference_world[:, :, HAND_QUATERNION_SLICE.start] = 1.0
         self._dataset_to_world_quat = torch.zeros(self.num_envs, 4, device=self.device)
         self._dataset_to_world_quat[:, 0] = 1.0
         self._object_to_hand_quat = torch.zeros(self.num_envs, 2, 4, device=self.device)
         self._object_to_hand_quat[:, :, 0] = 1.0
-        self._initial_anchor_midpoint_w = torch.zeros(self.num_envs, 3, device=self.device)
+        self._initial_anchor_positions_w = torch.zeros(
+            self.num_envs, 2, 3, device=self.device
+        )
         self._is_aligned = torch.zeros(self.num_envs, dtype=torch.bool, device=self.device)
+        self._alignment_episode_step = torch.zeros(
+            self.num_envs, dtype=torch.long, device=self.device
+        )
         self._metric_step_count = torch.zeros(self.num_envs, device=self.device)
-        self.metrics["left_pos_error_m"] = torch.zeros(self.num_envs, device=self.device)
-        self.metrics["right_pos_error_m"] = torch.zeros(self.num_envs, device=self.device)
-        self.metrics["mean_pos_error_m"] = torch.zeros(self.num_envs, device=self.device)
-        self.metrics["mean_rot_error_rad"] = torch.zeros(self.num_envs, device=self.device)
-        self.metrics["mean_rot_error_deg"] = torch.zeros(self.num_envs, device=self.device)
-        self.metrics["mean_lin_vel_error_mps"] = torch.zeros(self.num_envs, device=self.device)
-        self.metrics["mean_ang_vel_error_radps"] = torch.zeros(self.num_envs, device=self.device)
+        self._last_metric_common_step = torch.full(
+            (self.num_envs,),
+            -1,
+            dtype=torch.long,
+            device=self.device,
+        )
+        # CommandTerm.metrics is reset independently by CommandManager, whereas
+        # this term also owns a sample counter.  Mixing the framework reset with
+        # a running-mean counter can silently shrink logged errors across
+        # episodes.  Keep explicit sums/counts and let CoopG1S2Env consume them
+        # atomically before the framework reset.
+        tracking_metric_names = (
+            "left_pos_error_m",
+            "right_pos_error_m",
+            "mean_pos_error_m",
+            "mean_rot_error_rad",
+            "mean_rot_error_deg",
+            "mean_lin_vel_error_mps",
+            "mean_ang_vel_error_radps",
+            "mean_abs_pos_error_torso_x_m",
+            "mean_abs_pos_error_torso_y_m",
+            "mean_abs_pos_error_torso_z_m",
+            "mean_abs_rot_error_torso_x_deg",
+            "mean_abs_rot_error_torso_y_deg",
+            "mean_abs_rot_error_torso_z_deg",
+            "mean_abs_lin_vel_error_torso_x_mps",
+            "mean_abs_lin_vel_error_torso_y_mps",
+            "mean_abs_lin_vel_error_torso_z_mps",
+            "mean_abs_ang_vel_error_torso_x_radps",
+            "mean_abs_ang_vel_error_torso_y_radps",
+            "mean_abs_ang_vel_error_torso_z_radps",
+        )
+        self._tracking_metric_sums = {
+            name: torch.zeros(self.num_envs, device=self.device)
+            for name in tracking_metric_names
+        }
         self._latest_tracking_errors = {
-            name: torch.zeros_like(value) for name, value in self.metrics.items()
+            name: torch.zeros(self.num_envs, device=self.device)
+            for name in tracking_metric_names
         }
 
     @property
     def command(self) -> torch.Tensor:
-        return self._reference_command
+        env_ids = torch.arange(self.num_envs, device=self.device, dtype=torch.long)
+        return self._reference_in_current_torso(env_ids).reshape(
+            self.num_envs, TWO_HAND_REFERENCE_DIM
+        )
 
     @property
     def latest_tracking_errors(self) -> dict[str, torch.Tensor]:
@@ -182,6 +262,122 @@ class TwoHandCsvReferenceCommand(CommandTerm):
     @property
     def dataset_dt(self) -> float:
         return self._dataset_dt
+
+    @property
+    def hand_anchor_offsets(self) -> torch.Tensor:
+        """Configured palm-surface anchor offsets in each hand link frame."""
+        return self._hand_anchor_offsets
+
+    def tracking_error(self) -> torch.Tensor:
+        """Return directional target-minus-actual tracking errors for both hands.
+
+        Per hand, the layout is position (3), orientation axis-angle (3),
+        linear velocity (3), and angular velocity (3), all in the torso frame.
+        """
+        env_ids = torch.arange(self.num_envs, device=self.device, dtype=torch.long)
+        errors = self._tracking_error_components(env_ids)
+        return torch.cat(
+            (
+                errors["position"],
+                errors["orientation"],
+                errors["linear_velocity"],
+                errors["angular_velocity"],
+            ),
+            dim=-1,
+        ).reshape(self.num_envs, -1)
+
+    def tracking_state(
+        self,
+        env_ids: Sequence[int] | torch.Tensor | None = None,
+    ) -> dict[str, torch.Tensor]:
+        """Return synchronized reference and measured hand states in the torso frame.
+
+        This is primarily used by play-time diagnostics. Each returned tensor has
+        shape ``(num_selected_envs, 2, D)`` where hand index 0 is left and hand
+        index 1 is right. Position is measured at the configured palm anchor,
+        rather than at the hand link origin, so these values match the rewards.
+        """
+        return self._tracking_state_components(self._resolve_env_ids(env_ids))
+
+    def tracking_state_world(
+        self,
+        env_ids: Sequence[int] | torch.Tensor | None = None,
+    ) -> dict[str, torch.Tensor]:
+        """Return play-time reference and measured hand states in world coordinates.
+
+        This is a visualization/diagnostics view only.  The residual observation,
+        rewards, and directional tracking errors continue to use the torso-frame
+        state returned by :meth:`tracking_state`.
+        """
+        env_ids = self._resolve_env_ids(env_ids)
+        reference_w = self._reference_world[env_ids]
+        actual_w = self._actual_anchor_state_world(env_ids)
+        return {
+            "target_position": reference_w[:, :, HAND_POSITION_SLICE],
+            "actual_position": actual_w["position"],
+            "target_quaternion": reference_w[:, :, HAND_QUATERNION_SLICE],
+            "actual_quaternion": actual_w["quaternion"],
+            "target_linear_velocity": reference_w[:, :, HAND_LINEAR_VELOCITY_SLICE],
+            "actual_linear_velocity": actual_w["linear_velocity"],
+            "target_angular_velocity": reference_w[:, :, HAND_ANGULAR_VELOCITY_SLICE],
+            "actual_angular_velocity": actual_w["angular_velocity"],
+            "target_force": reference_w[:, :, HAND_FORCE_SLICE],
+            "target_moment": reference_w[:, :, HAND_MOMENT_SLICE],
+        }
+
+    def virtual_spring_state_world(
+        self,
+        env_ids: Sequence[int] | torch.Tensor | None = None,
+    ) -> dict[str, torch.Tensor]:
+        """Return the moving spring anchor and measured palm-anchor state.
+
+        The spring equilibrium ``target_position`` and
+        ``target_linear_velocity`` come from the reset-aligned offline
+        trajectory. ``csv_hand_on_payload_force`` retains the MATLAB sign
+        convention: it is the force exerted by a hand on the payload. A
+        virtual environment force applied to the robot must therefore use the
+        opposite sign.
+
+        ``dataset_to_world_quaternion`` maps dataset inertial-frame vectors to
+        the world frame. It is exposed so the virtual spring can apply an axis
+        mask in the dataset frame without mixing world and torso axes.
+        """
+        env_ids = self._resolve_env_ids(env_ids)
+        reference_w = self._reference_world[env_ids]
+        actual_w = self._actual_anchor_state_world(env_ids)
+        return {
+            "target_position": reference_w[:, :, HAND_POSITION_SLICE],
+            "target_linear_velocity": reference_w[:, :, HAND_LINEAR_VELOCITY_SLICE],
+            "actual_position": actual_w["position"],
+            "actual_linear_velocity": actual_w["linear_velocity"],
+            "csv_hand_on_payload_force": reference_w[:, :, HAND_FORCE_SLICE],
+            "dataset_to_world_quaternion": self._dataset_to_world_quat[env_ids],
+        }
+
+    def reference_path_world(self, env_id: int = 0, sample_stride: int = 1) -> torch.Tensor:
+        """Return the reset-aligned complete two-hand position path in world coordinates.
+
+        The returned tensor has shape ``(num_samples, 2, 3)``. This method is
+        intended for visualization only; policy observations continue to use
+        the current reference expressed in the torso frame.
+        """
+        if env_id < 0 or env_id >= self.num_envs:
+            raise IndexError(f"Environment index {env_id} is outside [0, {self.num_envs}).")
+        if sample_stride <= 0:
+            raise ValueError("sample_stride must be positive.")
+        if not bool(self._is_aligned[env_id].item()):
+            raise RuntimeError("The hand-reference path must be aligned before it can be visualized.")
+
+        data_pos = self._reference_data[::sample_stride, :, HAND_POSITION_SLICE]
+        num_samples = data_pos.shape[0]
+        dataset_to_world_quat = self._dataset_to_world_quat[env_id].view(1, 1, 4)
+        dataset_to_world_quat = dataset_to_world_quat.expand(num_samples, 2, -1)
+        data_delta = data_pos - self._data_initial_positions.view(1, 2, 3)
+        delta_w = quat_apply(
+            dataset_to_world_quat.reshape(-1, 4),
+            data_delta.reshape(-1, 3),
+        ).reshape(num_samples, 2, 3)
+        return self._initial_anchor_positions_w[env_id].view(1, 2, 3) + delta_w
 
     def align_to_current_state(self, env_ids: Sequence[int] | torch.Tensor | None = None) -> None:
         """Align the dataset initial grasp to the current simulated hand anchors."""
@@ -193,7 +389,7 @@ class TwoHandCsvReferenceCommand(CommandTerm):
         hand_quat_w = self.robot.data.body_link_quat_w[env_ids][:, self._hand_body_ids]
         offsets = self._hand_anchor_offsets.unsqueeze(0).expand(len(env_ids), -1, -1)
         offset_w = quat_apply(hand_quat_w.reshape(-1, 4), offsets.reshape(-1, 3)).reshape(len(env_ids), 2, 3)
-        self._initial_anchor_midpoint_w[env_ids] = (hand_pos_w + offset_w).mean(dim=1)
+        self._initial_anchor_positions_w[env_ids] = hand_pos_w + offset_w
 
         torso_quat_w = self.robot.data.body_link_quat_w[env_ids, self._torso_body_id]
         data_initial_quat = self._data_initial_quat.unsqueeze(0).expand(len(env_ids), -1)
@@ -203,8 +399,14 @@ class TwoHandCsvReferenceCommand(CommandTerm):
             quat_inv(initial_object_quat_w.reshape(-1, 4)),
             hand_quat_w.reshape(-1, 4),
         ).reshape(len(env_ids), 2, 4)
+        self._alignment_episode_step[env_ids] = self._env.episode_length_buf[env_ids]
         self._is_aligned[env_ids] = True
         self.update_from_episode_step(env_ids)
+        # Keep play-time live diagnostics synchronized immediately after an
+        # explicit or automatic reset, without adding reset state to the
+        # episode accumulators.
+        for name, values in self._tracking_metric_values(env_ids).items():
+            self._latest_tracking_errors[name][env_ids] = values
 
     def update_from_episode_step(
         self,
@@ -224,15 +426,16 @@ class TwoHandCsvReferenceCommand(CommandTerm):
 
         if preview_steps is None:
             preview_steps = self.cfg.preview_steps
-        target_time = (self._env.episode_length_buf[env_ids] + preview_steps).float() * self._env.step_dt
+        elapsed_steps = (
+            self._env.episode_length_buf[env_ids]
+            - self._alignment_episode_step[env_ids]
+            + preview_steps
+        )
+        target_time = elapsed_steps.clamp_min(0).float() * self._env.step_dt
         frame_ids = torch.round(target_time / self._dataset_dt).long()
         frame_ids.clamp_(0, self._reference_data.shape[0] - 1)
         reference = self._reference_data[frame_ids]
 
-        torso_pos_w = self.robot.data.body_link_pos_w[env_ids, self._torso_body_id]
-        torso_quat_w = self.robot.data.body_link_quat_w[env_ids, self._torso_body_id]
-        torso_lin_vel_w = self.robot.data.body_link_lin_vel_w[env_ids, self._torso_body_id]
-        torso_ang_vel_w = self.robot.data.body_link_ang_vel_w[env_ids, self._torso_body_id]
         q_wn = self._dataset_to_world_quat[env_ids]
 
         data_pos = reference[:, :, HAND_POSITION_SLICE]
@@ -244,11 +447,10 @@ class TwoHandCsvReferenceCommand(CommandTerm):
 
         q_wn_hands = q_wn.unsqueeze(1).expand(-1, 2, -1)
         object_to_hand_quat = self._object_to_hand_quat[env_ids]
-        torso_quat_hands = torso_quat_w.unsqueeze(1).expand(-1, 2, -1)
-        initial_midpoint_w = self._initial_anchor_midpoint_w[env_ids].unsqueeze(1)
-        data_delta = data_pos - self._data_initial_midpoint.view(1, 1, 3)
+        initial_anchor_positions_w = self._initial_anchor_positions_w[env_ids]
+        data_delta = data_pos - self._data_initial_positions.view(1, 2, 3)
 
-        pos_w = initial_midpoint_w + quat_apply(
+        pos_w = initial_anchor_positions_w + quat_apply(
             q_wn_hands.reshape(-1, 4), data_delta.reshape(-1, 3)
         ).reshape(-1, 2, 3)
         object_quat_w = quat_mul(
@@ -267,6 +469,33 @@ class TwoHandCsvReferenceCommand(CommandTerm):
         moment_w = quat_apply(
             object_quat_w.reshape(-1, 4), data_moment.reshape(-1, 3)
         ).reshape(-1, 2, 3)
+
+        self._reference_world[env_ids] = torch.cat(
+            (pos_w, quat_w, lin_vel_w, ang_vel_w, force_w, moment_w),
+            dim=-1,
+        )
+
+    def _reference_in_current_torso(self, env_ids: torch.Tensor) -> torch.Tensor:
+        """Express the stored world target through the current torso state.
+
+        The world target is selected before physics for the upcoming sample.
+        This conversion is deliberately performed on demand so that reward,
+        observation, and diagnostic callers all use the same post-physics
+        torso pose and velocity.
+        """
+        reference_w = self._reference_world[env_ids]
+        torso_pos_w = self.robot.data.body_link_pos_w[env_ids, self._torso_body_id]
+        torso_quat_w = self.robot.data.body_link_quat_w[env_ids, self._torso_body_id]
+        torso_lin_vel_w = self.robot.data.body_link_lin_vel_w[env_ids, self._torso_body_id]
+        torso_ang_vel_w = self.robot.data.body_link_ang_vel_w[env_ids, self._torso_body_id]
+        torso_quat_hands = torso_quat_w.unsqueeze(1).expand(-1, 2, -1)
+
+        pos_w = reference_w[:, :, HAND_POSITION_SLICE]
+        quat_w = reference_w[:, :, HAND_QUATERNION_SLICE]
+        lin_vel_w = reference_w[:, :, HAND_LINEAR_VELOCITY_SLICE]
+        ang_vel_w = reference_w[:, :, HAND_ANGULAR_VELOCITY_SLICE]
+        force_w = reference_w[:, :, HAND_FORCE_SLICE]
+        moment_w = reference_w[:, :, HAND_MOMENT_SLICE]
 
         pos_t = quat_apply_inverse(
             torso_quat_hands.reshape(-1, 4),
@@ -290,64 +519,24 @@ class TwoHandCsvReferenceCommand(CommandTerm):
         moment_t = quat_apply_inverse(
             torso_quat_hands.reshape(-1, 4), moment_w.reshape(-1, 3)
         ).reshape(-1, 2, 3)
-
-        command = torch.cat((pos_t, quat_t, lin_vel_t, ang_vel_t, force_t, moment_t), dim=-1)
-        self._reference_command[env_ids] = command.reshape(len(env_ids), TWO_HAND_REFERENCE_DIM)
+        return torch.cat(
+            (pos_t, quat_t, lin_vel_t, ang_vel_t, force_t, moment_t),
+            dim=-1,
+        )
 
     def _resolve_env_ids(self, env_ids: Sequence[int] | torch.Tensor | None) -> torch.Tensor:
         if env_ids is None or isinstance(env_ids, slice):
             return torch.arange(self.num_envs, device=self.device, dtype=torch.long)
         return torch.as_tensor(env_ids, device=self.device, dtype=torch.long)
 
-    def _update_metrics(self):
-        env_ids = torch.nonzero(self._is_aligned, as_tuple=False).flatten()
-        if len(env_ids) == 0:
-            return
-
-        hand_pos_w = self.robot.data.body_link_pos_w[env_ids][:, self._hand_body_ids]
-        hand_quat_w = self.robot.data.body_link_quat_w[env_ids][:, self._hand_body_ids]
-        hand_lin_vel_w = self.robot.data.body_link_lin_vel_w[env_ids][:, self._hand_body_ids]
-        hand_ang_vel_w = self.robot.data.body_link_ang_vel_w[env_ids][:, self._hand_body_ids]
-        torso_pos_w = self.robot.data.body_link_pos_w[env_ids, self._torso_body_id]
-        torso_quat_w = self.robot.data.body_link_quat_w[env_ids, self._torso_body_id]
-        torso_lin_vel_w = self.robot.data.body_link_lin_vel_w[env_ids, self._torso_body_id]
-        torso_ang_vel_w = self.robot.data.body_link_ang_vel_w[env_ids, self._torso_body_id]
-
-        offsets = self._hand_anchor_offsets.unsqueeze(0).expand(len(env_ids), -1, -1)
-        offsets_w = quat_apply(
-            hand_quat_w.reshape(-1, 4),
-            offsets.reshape(-1, 3),
-        ).reshape(len(env_ids), 2, 3)
-        anchor_pos_w = hand_pos_w + offsets_w
-        anchor_lin_vel_w = hand_lin_vel_w + torch.cross(hand_ang_vel_w, offsets_w, dim=-1)
-
-        torso_quat_hands = torso_quat_w.unsqueeze(1).expand(-1, 2, -1)
-        actual_pos_t = quat_apply_inverse(
-            torso_quat_hands.reshape(-1, 4),
-            (anchor_pos_w - torso_pos_w.unsqueeze(1)).reshape(-1, 3),
-        ).reshape(len(env_ids), 2, 3)
-        actual_quat_t = quat_mul(
-            quat_inv(torso_quat_hands.reshape(-1, 4)),
-            hand_quat_w.reshape(-1, 4),
-        ).reshape(len(env_ids), 2, 4)
-        actual_lin_vel_t = quat_apply_inverse(
-            torso_quat_hands.reshape(-1, 4),
-            (anchor_lin_vel_w - torso_lin_vel_w.unsqueeze(1)).reshape(-1, 3),
-        ).reshape(len(env_ids), 2, 3)
-        actual_ang_vel_t = quat_apply_inverse(
-            torso_quat_hands.reshape(-1, 4),
-            (hand_ang_vel_w - torso_ang_vel_w.unsqueeze(1)).reshape(-1, 3),
-        ).reshape(len(env_ids), 2, 3)
-
-        target = self._reference_command[env_ids].reshape(len(env_ids), 2, HAND_REFERENCE_DIM)
-        pos_error = torch.norm(actual_pos_t - target[:, :, HAND_POSITION_SLICE], dim=-1)
-        rot_error = quat_error_magnitude(
-            actual_quat_t.reshape(-1, 4),
-            target[:, :, HAND_QUATERNION_SLICE].reshape(-1, 4),
-        ).reshape(len(env_ids), 2)
-        lin_vel_error = torch.norm(actual_lin_vel_t - target[:, :, HAND_LINEAR_VELOCITY_SLICE], dim=-1)
-        ang_vel_error = torch.norm(actual_ang_vel_t - target[:, :, HAND_ANGULAR_VELOCITY_SLICE], dim=-1)
-        latest_errors = {
+    def _tracking_metric_values(self, env_ids: torch.Tensor) -> dict[str, torch.Tensor]:
+        """Compute instantaneous norm errors without changing accumulators."""
+        errors = self._tracking_error_components(env_ids)
+        pos_error = torch.norm(errors["position"], dim=-1)
+        rot_error = torch.norm(errors["orientation"], dim=-1)
+        lin_vel_error = torch.norm(errors["linear_velocity"], dim=-1)
+        ang_vel_error = torch.norm(errors["angular_velocity"], dim=-1)
+        values = {
             "left_pos_error_m": pos_error[:, 0],
             "right_pos_error_m": pos_error[:, 1],
             "mean_pos_error_m": pos_error.mean(dim=1),
@@ -356,23 +545,157 @@ class TwoHandCsvReferenceCommand(CommandTerm):
             "mean_lin_vel_error_mps": lin_vel_error.mean(dim=1),
             "mean_ang_vel_error_radps": ang_vel_error.mean(dim=1),
         }
+        for axis_index, axis_name in enumerate(("x", "y", "z")):
+            values[f"mean_abs_pos_error_torso_{axis_name}_m"] = (
+                torch.abs(errors["position"][:, :, axis_index]).mean(dim=1)
+            )
+            values[f"mean_abs_rot_error_torso_{axis_name}_deg"] = (
+                torch.abs(errors["orientation"][:, :, axis_index]).mean(dim=1)
+                * (180.0 / math.pi)
+            )
+            values[f"mean_abs_lin_vel_error_torso_{axis_name}_mps"] = (
+                torch.abs(errors["linear_velocity"][:, :, axis_index]).mean(dim=1)
+            )
+            values[f"mean_abs_ang_vel_error_torso_{axis_name}_radps"] = (
+                torch.abs(errors["angular_velocity"][:, :, axis_index]).mean(dim=1)
+            )
+        return values
+
+    def record_tracking_metrics(self) -> None:
+        """Accumulate the current frame once, at reward-computation time.
+
+        IsaacLab computes reward before resetting terminated environments but
+        calls ``CommandManager.compute`` only after those resets.  Recording
+        here through an explicit reward hook includes the terminal frame in
+        the episode that produced it and avoids accumulating the next
+        episode's reset state into the old statistics.
+        """
+        env_ids = torch.nonzero(self._is_aligned, as_tuple=False).flatten()
+        common_step = int(self._env.common_step_counter)
+        env_ids = env_ids[self._last_metric_common_step[env_ids] != common_step]
+        if len(env_ids) == 0:
+            return
+
+        latest_errors = self._tracking_metric_values(env_ids)
         for name, values in latest_errors.items():
             self._latest_tracking_errors[name][env_ids] = values
 
-        count = self._metric_step_count[env_ids] + 1.0
-        self._metric_step_count[env_ids] = count
-
-        def _update_running_mean(name: str, values: torch.Tensor) -> None:
-            current = self.metrics[name][env_ids]
-            self.metrics[name][env_ids] = current + (values - current) / count
+        self._metric_step_count[env_ids] += 1.0
+        self._last_metric_common_step[env_ids] = common_step
 
         for name, values in latest_errors.items():
-            _update_running_mean(name, values)
+            self._tracking_metric_sums[name][env_ids] += values
+
+    def reset_episode_metrics(
+        self,
+        env_ids: Sequence[int] | torch.Tensor,
+    ) -> dict[str, float]:
+        """Return exact per-episode tracking means and clear their accumulators."""
+        env_ids = self._resolve_env_ids(env_ids)
+        if len(env_ids) == 0:
+            return {}
+
+        count = self._metric_step_count[env_ids].clamp_min(1.0)
+        logs = {
+            f"Metrics/hand_reference/{name}": torch.mean(
+                metric_sum[env_ids] / count
+            ).item()
+            for name, metric_sum in self._tracking_metric_sums.items()
+        }
+        self._metric_step_count[env_ids] = 0.0
+        self._last_metric_common_step[env_ids] = -1
+        for metric_sum in self._tracking_metric_sums.values():
+            metric_sum[env_ids] = 0.0
+        return logs
+
+    def _update_metrics(self):
+        """Refresh live values after command updates without double-counting."""
+        env_ids = torch.nonzero(self._is_aligned, as_tuple=False).flatten()
+        if len(env_ids) == 0:
+            return
+        for name, values in self._tracking_metric_values(env_ids).items():
+            self._latest_tracking_errors[name][env_ids] = values
+
+    def _tracking_state_components(self, env_ids: torch.Tensor) -> dict[str, torch.Tensor]:
+        """Compute synchronized target and actual states for selected environments."""
+        actual_w = self._actual_anchor_state_world(env_ids)
+        torso_pos_w = self.robot.data.body_link_pos_w[env_ids, self._torso_body_id]
+        torso_quat_w = self.robot.data.body_link_quat_w[env_ids, self._torso_body_id]
+        torso_lin_vel_w = self.robot.data.body_link_lin_vel_w[env_ids, self._torso_body_id]
+        torso_ang_vel_w = self.robot.data.body_link_ang_vel_w[env_ids, self._torso_body_id]
+
+        torso_quat_hands = torso_quat_w.unsqueeze(1).expand(-1, 2, -1)
+        actual_pos_t = quat_apply_inverse(
+            torso_quat_hands.reshape(-1, 4),
+            (actual_w["position"] - torso_pos_w.unsqueeze(1)).reshape(-1, 3),
+        ).reshape(len(env_ids), 2, 3)
+        actual_quat_t = quat_mul(
+            quat_inv(torso_quat_hands.reshape(-1, 4)),
+            actual_w["quaternion"].reshape(-1, 4),
+        ).reshape(len(env_ids), 2, 4)
+        actual_lin_vel_t = quat_apply_inverse(
+            torso_quat_hands.reshape(-1, 4),
+            (actual_w["linear_velocity"] - torso_lin_vel_w.unsqueeze(1)).reshape(-1, 3),
+        ).reshape(len(env_ids), 2, 3)
+        actual_ang_vel_t = quat_apply_inverse(
+            torso_quat_hands.reshape(-1, 4),
+            (actual_w["angular_velocity"] - torso_ang_vel_w.unsqueeze(1)).reshape(-1, 3),
+        ).reshape(len(env_ids), 2, 3)
+
+        target = self._reference_in_current_torso(env_ids)
+        return {
+            "target_position": target[:, :, HAND_POSITION_SLICE],
+            "actual_position": actual_pos_t,
+            "target_quaternion": target[:, :, HAND_QUATERNION_SLICE],
+            "actual_quaternion": actual_quat_t,
+            "target_linear_velocity": target[:, :, HAND_LINEAR_VELOCITY_SLICE],
+            "actual_linear_velocity": actual_lin_vel_t,
+            "target_angular_velocity": target[:, :, HAND_ANGULAR_VELOCITY_SLICE],
+            "actual_angular_velocity": actual_ang_vel_t,
+            "target_force": target[:, :, HAND_FORCE_SLICE],
+            "target_moment": target[:, :, HAND_MOMENT_SLICE],
+        }
+
+    def _actual_anchor_state_world(self, env_ids: torch.Tensor) -> dict[str, torch.Tensor]:
+        """Return palm-anchor pose and twist directly in world coordinates."""
+        hand_pos_w = self.robot.data.body_link_pos_w[env_ids][:, self._hand_body_ids]
+        hand_quat_w = self.robot.data.body_link_quat_w[env_ids][:, self._hand_body_ids]
+        hand_lin_vel_w = self.robot.data.body_link_lin_vel_w[env_ids][:, self._hand_body_ids]
+        hand_ang_vel_w = self.robot.data.body_link_ang_vel_w[env_ids][:, self._hand_body_ids]
+
+        offsets = self._hand_anchor_offsets.unsqueeze(0).expand(len(env_ids), -1, -1)
+        offsets_w = quat_apply(
+            hand_quat_w.reshape(-1, 4),
+            offsets.reshape(-1, 3),
+        ).reshape(len(env_ids), 2, 3)
+        return {
+            "position": hand_pos_w + offsets_w,
+            "quaternion": hand_quat_w,
+            "linear_velocity": hand_lin_vel_w
+            + torch.cross(hand_ang_vel_w, offsets_w, dim=-1),
+            "angular_velocity": hand_ang_vel_w,
+        }
+
+    def _tracking_error_components(self, env_ids: torch.Tensor) -> dict[str, torch.Tensor]:
+        """Compute directional hand-reference errors for selected environments."""
+        state = self._tracking_state_components(env_ids)
+        return {
+            "position": state["target_position"] - state["actual_position"],
+            "orientation": quat_box_minus(
+                state["target_quaternion"].reshape(-1, 4),
+                state["actual_quaternion"].reshape(-1, 4),
+            ).reshape(len(env_ids), 2, 3),
+            "linear_velocity": state["target_linear_velocity"] - state["actual_linear_velocity"],
+            "angular_velocity": state["target_angular_velocity"] - state["actual_angular_velocity"],
+        }
 
     def _resample_command(self, env_ids: Sequence[int]):
         env_ids = self._resolve_env_ids(env_ids)
         self._is_aligned[env_ids] = False
         self._metric_step_count[env_ids] = 0.0
+        self._last_metric_common_step[env_ids] = -1
+        for metric_sum in self._tracking_metric_sums.values():
+            metric_sum[env_ids] = 0.0
 
     def _update_command(self):
         self.update_from_episode_step()

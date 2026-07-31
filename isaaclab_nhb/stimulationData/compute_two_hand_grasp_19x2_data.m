@@ -18,13 +18,11 @@ clc; clear; close all;
 inputCsv = 'box_6dof_straight_20s_dt0005.csv';
 outputCsv = 'box_6dof_two_hand_19x2.csv';
 
-L = 0.18;
-W = 0.55;
-H = 0.16;
-
-% Contact locations in body frame, matched to the Isaac box anchors.
-rLeft_B  = [0.09;  0.22; -0.08];
-rRight_B = [0.09; -0.22; -0.08];
+% Contact locations relative to their midpoint. They are the centers of the
+% inward-facing palm collision surfaces in the nominal S1 hold pose.
+contactHalfSeparation = 0.21185503;
+rLeft_B  = [0.0;  contactHalfSeparation; 0.0];
+rRight_B = [0.0; -contactHalfSeparation; 0.0];
 
 WL = [eye(3), zeros(3);
       skew(rLeft_B), eye(3)];

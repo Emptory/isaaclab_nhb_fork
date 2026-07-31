@@ -29,10 +29,14 @@ Jy = (1/12) * params.m * (params.L^2 + params.H^2);
 Jz = (1/12) * params.m * (params.L^2 + params.W^2);
 params.J = diag([Jx, Jy, Jz]);
 
-%% Reference trajectory: straight line at 0.2 m/s
-params.v_ref = 0.2;       % m/s
+%% Reference trajectory: straight line at 0.30 m/s
+% Keep this inside the frozen S1 command domain [0.25, 0.40] m/s and in
+% sync with CoopG1S2CommandsCfg.
+params.v_ref = 0.30;      % m/s
 params.y_ref = 0.0;       % m
-params.z_ref = 0.0;       % m
+% Nominal world height of the midpoint between the two inner palm contacts:
+% 0.82 m torso target height + 0.095234415 m contact height in torso frame.
+params.z_ref = 0.915234415; % m
 params.q_ref = [1; 0; 0; 0];
 params.omega_ref = [0; 0; 0];
 
@@ -52,7 +56,7 @@ t = (0:dt:T)';
 N = numel(t);
 
 %% Initial state
-p0 = [0.0; 0.0; 0.0];                  % m
+p0 = [0.0; 0.0; params.z_ref];         % m
 v0 = [params.v_ref; 0; 0];             % m/s
 q0 = [1; 0; 0; 0];                     % identity attitude
 w0 = [0; 0; 0];                        % rad/s, body frame

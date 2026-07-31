@@ -1685,6 +1685,35 @@ def action_rate_l2_clipped(env: ManagerBasedRLEnv, max_penalty: float = 100.0) -
     action_rate = torch.sum(torch.square(env.action_manager.action - env.action_manager.prev_action), dim=1)
     return torch.clamp(action_rate, max=max_penalty)
 
+
+def residual_action_l2(
+    env: ManagerBasedRLEnv,
+    action_indices: Sequence[int],
+) -> torch.Tensor:
+    """Penalize only the residual correction, leaving the frozen S1 action untouched."""
+    if not hasattr(env, "_s2_last_residual_action"):
+        raise RuntimeError("S2 residual-action buffer is unavailable before policy action decomposition.")
+    residual = env._s2_last_residual_action[:, list(action_indices)]
+    return torch.sum(torch.square(residual), dim=1)
+
+
+def residual_action_rate_l2(
+    env: ManagerBasedRLEnv,
+    action_indices: Sequence[int],
+) -> torch.Tensor:
+    """Penalize changes of the applied residual rather than total-action changes."""
+    if not hasattr(env, "_s2_previous_residual_action"):
+        raise RuntimeError("S2 residual-action history is unavailable before policy action decomposition.")
+    indices = list(action_indices)
+    delta = (
+        env._s2_last_residual_action[:, indices]
+        - env._s2_previous_residual_action[:, indices]
+    )
+    penalty = torch.sum(torch.square(delta), dim=1)
+    # The reset state contains no previous policy action.
+    return torch.where(env.episode_length_buf > 1, penalty, torch.zeros_like(penalty))
+
+
 def joint_target_l1(
         env: ManagerBasedRLEnv,
         targets: dict[str, float],
@@ -1952,6 +1981,82 @@ def two_hand_reference_position_exp(
     )[:, :, HAND_POSITION_SLICE]
     error = torch.mean(torch.sum(torch.square(actual - target), dim=-1), dim=1)
     return torch.exp(-error / std**2)
+
+
+def record_two_hand_reference_metrics(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+) -> torch.Tensor:
+    """Schedule episode tracking metrics at the pre-reset reward hook.
+
+    A non-zero-weight reward term calls this once per environment step.  The
+    returned value is exactly zero, so it does not alter the task objective.
+    The command term itself guards against accidental duplicate calls within
+    the same global step.
+    """
+    command_term = env.command_manager.get_term(command_name)
+    if not hasattr(command_term, "record_tracking_metrics"):
+        raise TypeError(
+            f"Command term '{command_name}' does not support two-hand tracking metrics."
+        )
+    command_term.record_tracking_metrics()
+    return torch.zeros(env.num_envs, device=env.device)
+
+
+def two_hand_hybrid_position_exp(
+    env: ManagerBasedRLEnv,
+    std: float = 0.10,
+) -> torch.Tensor:
+    """Track palm position only on axes not assigned to force control."""
+    spring = getattr(env, "_virtual_spring", None)
+    if spring is None:
+        raise RuntimeError("Hybrid position reward requires the S2 virtual spring manager.")
+    return spring.position_tracking_reward(std)
+
+
+def two_hand_hybrid_linear_velocity_exp(
+    env: ManagerBasedRLEnv,
+    std: float = 0.30,
+) -> torch.Tensor:
+    """Track palm velocity only on axes not assigned to force control."""
+    spring = getattr(env, "_virtual_spring", None)
+    if spring is None:
+        raise RuntimeError("Hybrid velocity reward requires the S2 virtual spring manager.")
+    return spring.linear_velocity_tracking_reward(std)
+
+
+def two_hand_virtual_force_tracking_exp(
+    env: ManagerBasedRLEnv,
+    std: float = 0.25,
+) -> torch.Tensor:
+    r"""Track the environment-on-hand virtual force for each hand.
+
+    This follows the paper's ``exp(-||F-F_cmd||/std)`` form. ``std`` is
+    task-scaled because the current CSV command is 0.24525 N per hand, rather
+    than the tens of newtons used by the B1+Z1 experiments.
+    """
+    spring = getattr(env, "_virtual_spring", None)
+    if spring is None:
+        raise RuntimeError("Force tracking reward requires the S2 virtual spring manager.")
+    return spring.force_tracking_reward(std)
+
+
+def two_hand_virtual_force_clamp_fraction(env: ManagerBasedRLEnv) -> torch.Tensor:
+    """Return the fraction of controlled hand-force axes at the safety clamp."""
+    spring = getattr(env, "_virtual_spring", None)
+    if spring is None:
+        raise RuntimeError("Force clamp penalty requires the S2 virtual spring manager.")
+    controlled_axes = spring.force_axis_mask_n.sum().clamp_min(1.0)
+    return spring.force_clamped.float().sum(dim=(1, 2)) / (2.0 * controlled_axes)
+
+
+def record_two_hand_virtual_force_metrics(env: ManagerBasedRLEnv) -> torch.Tensor:
+    """Schedule virtual-force diagnostics before terminated envs are reset."""
+    spring = getattr(env, "_virtual_spring", None)
+    if spring is None:
+        raise RuntimeError("Force metrics require the S2 virtual spring manager.")
+    spring.record_metrics()
+    return torch.zeros(env.num_envs, device=env.device)
 
 
 def two_hand_reference_orientation_exp(

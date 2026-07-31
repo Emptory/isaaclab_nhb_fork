@@ -12,11 +12,121 @@ from isaaclab.managers import SceneEntityCfg
 from isaaclab.managers import ManagerBase, ManagerTermBase
 from isaaclab.managers import ObservationTermCfg as ObsTerm
 from isaaclab.utils.math import matrix_from_quat, subtract_frame_transforms
-from .commands import MotionCommand
+from .commands import HAND_KINEMATIC_DIM, HAND_REFERENCE_DIM, MotionCommand
 from isaaclab.sensors import ContactSensor, RayCaster
 
 if TYPE_CHECKING:
     from isaaclab.envs import ManagerBasedEnv, ManagerBasedRLEnv
+
+
+def two_hand_reference_tracking_error(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+) -> torch.Tensor:
+    """Directional two-hand pose and velocity errors from a replay command."""
+    command_term = env.command_manager.get_term(command_name)
+    if not hasattr(command_term, "tracking_error"):
+        raise TypeError(f"Command term '{command_name}' does not expose tracking_error().")
+    return command_term.tracking_error()
+
+
+def two_hand_reference_kinematics(
+    env: ManagerBasedRLEnv,
+    command_name: str,
+) -> torch.Tensor:
+    """Return only p/q/v/w from the two-hand CSV command.
+
+    The command is laid out per hand, so it must be reshaped before removing
+    force and moment.  Slicing the flattened command directly would mix the
+    left-hand wrench with the right-hand kinematic state.
+    """
+    command = env.command_manager.get_command(command_name)
+    command = command.reshape(env.num_envs, 2, HAND_REFERENCE_DIM)
+    return command[:, :, :HAND_KINEMATIC_DIM].reshape(env.num_envs, -1)
+
+
+def _s2_virtual_spring(env: ManagerBasedRLEnv):
+    spring = getattr(env, "_virtual_spring", None)
+    if spring is not None:
+        return spring
+    if getattr(env, "_virtual_spring_initializing", False):
+        # ObservationManager calls every term once while the parent
+        # environment constructor is still discovering observation shapes.
+        return None
+    raise RuntimeError("S2 virtual-force observation requested without a virtual spring manager.")
+
+
+def two_hand_virtual_force_target(env: ManagerBasedRLEnv) -> torch.Tensor:
+    """Two target environment-on-hand forces in the current torso frame."""
+    spring = _s2_virtual_spring(env)
+    if spring is None:
+        return torch.zeros(env.num_envs, 6, device=env.device)
+    return spring.target_force_observation()
+
+
+def two_hand_actual_virtual_force(env: ManagerBasedRLEnv) -> torch.Tensor:
+    """Privileged two-hand virtual spring force in the current torso frame.
+
+    This is the known force applied by the virtual environment, not a
+    wrist-force sensor or physical contact-force measurement.
+    """
+    spring = _s2_virtual_spring(env)
+    if spring is None:
+        return torch.zeros(env.num_envs, 6, device=env.device)
+    return spring.actual_force_observation()
+
+
+def two_hand_virtual_spring_deflection(env: ManagerBasedRLEnv) -> torch.Tensor:
+    """Two spring equilibrium-minus-palm displacements in the torso frame."""
+    spring = _s2_virtual_spring(env)
+    if spring is None:
+        return torch.zeros(env.num_envs, 6, device=env.device)
+    return spring.spring_deflection_observation()
+
+
+def two_hand_force_control_axes(env: ManagerBasedRLEnv) -> torch.Tensor:
+    """Two force-control axis-direction vectors in the current torso frame."""
+    spring = _s2_virtual_spring(env)
+    if spring is None:
+        return torch.zeros(env.num_envs, 6, device=env.device)
+    return spring.force_control_axis_observation()
+
+
+def _ensure_s2_action_component_buffers(env: ManagerBasedRLEnv) -> None:
+    """Lazily create policy-action buffers used by S2 observations/rewards."""
+    action_dim = env.action_manager.total_action_dim
+    specs = (
+        "_s2_previous_base_action",
+        "_s2_last_residual_action",
+        "_s2_previous_residual_action",
+    )
+    for name in specs:
+        value = getattr(env, name, None)
+        if value is None or value.shape != (env.num_envs, action_dim):
+            setattr(
+                env,
+                name,
+                torch.zeros(env.num_envs, action_dim, device=env.device, dtype=torch.float32),
+            )
+
+
+def previous_base_action(env: ManagerBasedRLEnv) -> torch.Tensor:
+    """Return the frozen S1 actor's previous action, not the previous total action."""
+    _ensure_s2_action_component_buffers(env)
+    return env._s2_previous_base_action
+
+
+def previous_residual_action(
+    env: ManagerBasedRLEnv,
+    action_indices: Sequence[int] | None = None,
+) -> torch.Tensor:
+    """Return the residual that was physically applied on the preceding step."""
+    _ensure_s2_action_component_buffers(env)
+    residual = env._s2_last_residual_action
+    if action_indices is not None:
+        residual = residual[:, list(action_indices)]
+    return residual
+
 
 class obs_history(ManagerTermBase):
     """返回历史观测值，包括当前帧观测值"""

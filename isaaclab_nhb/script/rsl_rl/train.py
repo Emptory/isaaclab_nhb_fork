@@ -231,6 +231,13 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
 
     # create runner from rsl-rl
     # 创建runner
+    if (
+        (agent_cfg.resume or agent_cfg.algorithm.class_name == "Distillation")
+        and getattr(agent_cfg.policy, "class_name", None) == "ActorCriticResidual"
+    ):
+        # A resumed S2 checkpoint is self-contained.  Construct matching
+        # modules first and let runner.load() populate the frozen S1 weights.
+        agent_cfg.policy.defer_base_policy_load = True
     if agent_cfg.class_name == "OnPolicyRunner":
         runner = OnPolicyRunner(env, agent_cfg.to_dict(), log_dir=log_dir, device=agent_cfg.device)
     elif agent_cfg.class_name == "DistillationRunner":

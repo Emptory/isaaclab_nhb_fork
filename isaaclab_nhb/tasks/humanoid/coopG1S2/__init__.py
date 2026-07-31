@@ -9,7 +9,11 @@ gym.register(
     disable_env_checker=True,
     kwargs={
         "env_cfg_entry_point": f"{__name__}.coopG1S2_env_cfg:CoopG1S2FixedPayloadEnvCfg",
-        "rsl_rl_cfg_entry_point": f"{agents.__name__}.coopG1S2_rsl_rl_ppo_cfg:CoopG1S2FixedPayloadPPORunnerCfg",
+        # Deprecated task-name alias.  The environment now requires the same
+        # frozen-S1/residual dict-action contract as the explicit Residual ID.
+        "rsl_rl_cfg_entry_point": (
+            f"{agents.__name__}.coopG1S2_rsl_rl_ppo_cfg:CoopG1S2ResidualPPORunnerCfg"
+        ),
         "rsl_rl_residual_cfg_entry_point": (
             f"{agents.__name__}.coopG1S2_rsl_rl_ppo_cfg:CoopG1S2ResidualPPORunnerCfg"
         ),

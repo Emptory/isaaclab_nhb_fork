@@ -14,6 +14,45 @@ import random
 if TYPE_CHECKING:
     from isaaclab.envs import ManagerBasedEnv
 
+
+def reset_joints_to_named_positions(
+    env: ManagerBasedEnv,
+    env_ids: torch.Tensor,
+    joint_positions: dict[str, float],
+    asset_cfg: SceneEntityCfg = SceneEntityCfg("robot"),
+) -> None:
+    """Reset all joints to defaults, then override selected joints by name."""
+    asset: Articulation = env.scene[asset_cfg.name]
+    joint_pos = asset.data.default_joint_pos[env_ids].clone()
+    joint_vel = asset.data.default_joint_vel[env_ids].clone()
+
+    joint_ids: list[int] = []
+    target_positions: list[float] = []
+    for joint_name, target_position in joint_positions.items():
+        matched_ids, matched_names = asset.find_joints(joint_name)
+        if len(matched_ids) != 1 or matched_names[0] != joint_name:
+            raise ValueError(
+                f"Expected exactly one joint named '{joint_name}', found {matched_names}."
+            )
+        joint_ids.append(matched_ids[0])
+        target_positions.append(float(target_position))
+
+    joint_pos[:, joint_ids] = torch.tensor(
+        target_positions,
+        device=joint_pos.device,
+        dtype=joint_pos.dtype,
+    )
+    joint_pos.clamp_(
+        asset.data.soft_joint_pos_limits[env_ids, :, 0],
+        asset.data.soft_joint_pos_limits[env_ids, :, 1],
+    )
+    joint_vel.clamp_(
+        -asset.data.soft_joint_vel_limits[env_ids],
+        asset.data.soft_joint_vel_limits[env_ids],
+    )
+    asset.write_joint_state_to_sim(joint_pos, joint_vel, env_ids=env_ids)
+
+
 def randomize_rigid_body_inertia(
     env,
     env_ids: torch.Tensor | None,

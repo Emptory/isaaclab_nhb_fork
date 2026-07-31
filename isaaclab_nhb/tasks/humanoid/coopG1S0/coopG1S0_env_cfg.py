@@ -146,6 +146,99 @@ class CoopG1S0ObsCfg:
     policy: PolicyCfg = PolicyCfg()
     critic: CriticCfg = CriticCfg()
 
+
+@configclass
+class CoopG1S0LegacyObsCfg:
+    """Legacy observation config without gait commands for older 480/495 checkpoints."""
+
+    @configclass
+    class PolicyCfg(ObsGroup):
+        base_ang_vel = ObsTerm(
+            func=mdp.base_ang_vel,
+            noise=Unoise(n_min=-0.03, n_max=0.03),
+        )
+        projected_gravity = ObsTerm(
+            func=mdp.projected_gravity,
+            noise=Unoise(n_min=-0.03, n_max=0.03),
+        )
+        velocity_commands = ObsTerm(
+            func=mdp.generated_commands,
+            params={"command_name": "base_velocity"},
+        )
+        joint_pos = ObsTerm(
+            func=mdp.joint_pos_rel,
+            params={
+                "asset_cfg": SceneEntityCfg(
+                    "robot",
+                    joint_names=G1_29DOF_JOINT_ORDER,
+                    preserve_order=True,
+                )
+            },
+            noise=Unoise(n_min=-0.01, n_max=0.01),
+        )
+        joint_vel = ObsTerm(
+            func=mdp.joint_vel_rel,
+            params={
+                "asset_cfg": SceneEntityCfg(
+                    "robot",
+                    joint_names=G1_29DOF_JOINT_ORDER,
+                    preserve_order=True,
+                )
+            },
+            noise=Unoise(n_min=-1.5, n_max=1.5),
+        )
+        actions = ObsTerm(func=mdp.last_action)
+
+        def __post_init__(self):
+            self.history_length = 5
+            self.enable_corruption = True
+            self.concatenate_terms = True
+
+    @configclass
+    class CriticCfg(ObsGroup):
+        base_lin_vel = ObsTerm(func=mdp.base_lin_vel)
+
+        base_ang_vel = ObsTerm(func=mdp.base_ang_vel)
+
+        projected_gravity = ObsTerm(func=mdp.projected_gravity)
+
+        velocity_commands = ObsTerm(
+            func=mdp.generated_commands,
+            params={"command_name": "base_velocity"},
+        )
+
+        joint_pos = ObsTerm(
+            func=mdp.joint_pos_rel,
+            params={
+                "asset_cfg": SceneEntityCfg(
+                    "robot",
+                    joint_names=G1_29DOF_JOINT_ORDER,
+                    preserve_order=True,
+                )
+            },
+        )
+
+        joint_vel = ObsTerm(
+            func=mdp.joint_vel_rel,
+            params={
+                "asset_cfg": SceneEntityCfg(
+                    "robot",
+                    joint_names=G1_29DOF_JOINT_ORDER,
+                    preserve_order=True,
+                )
+            },
+        )
+
+        actions = ObsTerm(func=mdp.last_action)
+
+        def __post_init__(self):
+            self.history_length = 5
+            self.enable_corruption = False
+            self.concatenate_terms = True
+
+    policy: PolicyCfg = PolicyCfg()
+    critic: CriticCfg = CriticCfg()
+
 @configclass
 class CoopG1S0ActionsCfg:
     """Action config for single G1 locomotion."""
@@ -455,6 +548,30 @@ class CoopG1S0FlatEnvCfg(ManagerBasedRLEnvCfg):
     )
 
     observations: CoopG1S0ObsCfg = CoopG1S0ObsCfg()
+    actions: CoopG1S0ActionsCfg = CoopG1S0ActionsCfg()
+    commands: CoopG1S0CommandsCfg = CoopG1S0CommandsCfg()
+    rewards: CoopG1S0RewardsCfg = CoopG1S0RewardsCfg()
+    terminations: CoopG1S0TerminationsCfg = CoopG1S0TerminationsCfg()
+    events: CoopG1S0EventCfg = CoopG1S0EventCfg()
+
+    def __post_init__(self):
+        self.decimation = 4
+        self.episode_length_s = 20.0
+
+        self.sim.dt = 0.005
+        self.sim.render_interval = self.decimation
+
+
+@configclass
+class CoopG1S0LegacyFlatEnvCfg(ManagerBasedRLEnvCfg):
+    """Flat locomotion env config compatible with the oldest 480/495 checkpoints."""
+
+    scene: CoopG1S0SceneCfg = CoopG1S0SceneCfg(
+        num_envs=4096,
+        env_spacing=2.5,
+    )
+
+    observations: CoopG1S0LegacyObsCfg = CoopG1S0LegacyObsCfg()
     actions: CoopG1S0ActionsCfg = CoopG1S0ActionsCfg()
     commands: CoopG1S0CommandsCfg = CoopG1S0CommandsCfg()
     rewards: CoopG1S0RewardsCfg = CoopG1S0RewardsCfg()

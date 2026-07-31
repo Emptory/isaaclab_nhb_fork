@@ -1,5 +1,6 @@
 import argparse
 import csv
+import math
 import os
 import time
 from collections import deque
@@ -12,7 +13,11 @@ ERROR_KEYS = (
     "mean_rot_error_deg",
     "mean_lin_vel_error_mps",
     "mean_ang_vel_error_radps",
+    "mean_virtual_force_error_n",
+    "mean_force_estimator_error_n",
 )
+
+MIN_Y_SPAN = 0.1
 
 
 def _read_recent_rows(csv_path: str, window: int) -> dict[str, list[float]]:
@@ -31,11 +36,36 @@ def _read_recent_rows(csv_path: str, window: int) -> dict[str, list[float]]:
                     continue
                 data["step"].append(float(row["step"]))
                 for key in ERROR_KEYS:
-                    data[key].append(float(row[key]))
+                    value = row.get(key)
+                    data[key].append(
+                        float(value) if value not in (None, "") else float("nan")
+                    )
     except (OSError, ValueError, KeyError):
         pass
 
     return {key: list(value) for key, value in data.items()}
+
+
+def _to_radians(values: list[float]) -> list[float]:
+    return [math.radians(value) for value in values]
+
+
+def _stable_upper_limit(
+    previous_upper: float,
+    *series: list[float],
+    minimum_span: float = MIN_Y_SPAN,
+) -> float:
+    """Keep a zero-based axis at least ``minimum_span`` and never shrink it."""
+    finite_values = [
+        value
+        for values in series
+        for value in values
+        if math.isfinite(value)
+    ]
+    observed_max = max(finite_values, default=0.0)
+    required = max(minimum_span, 1.05 * observed_max)
+    rounded = math.ceil(required / minimum_span) * minimum_span
+    return max(previous_upper, rounded)
 
 
 def main() -> None:
@@ -48,13 +78,15 @@ def main() -> None:
     import matplotlib.pyplot as plt
 
     plt.ion()
-    fig, axes = plt.subplots(3, 1, figsize=(9, 7), sharex=True)
+    fig, axes = plt.subplots(5, 1, figsize=(9, 11), sharex=True)
     fig.canvas.manager.set_window_title("Hand Reference Tracking Errors")
+    y_upper = [MIN_Y_SPAN] * len(axes)
 
     while plt.fignum_exists(fig.number):
         data = _read_recent_rows(args.csv, max(2, args.window))
         steps = data["step"]
         if steps:
+            rotation_error_rad = _to_radians(data["mean_rot_error_deg"])
             for axis in axes:
                 axis.clear()
                 axis.grid(True)
@@ -64,15 +96,46 @@ def main() -> None:
             axes[0].plot(steps, data["mean_pos_error_m"], label="mean", linewidth=2)
             axes[0].set_ylabel("pos error [m]")
             axes[0].legend(loc="upper right")
+            y_upper[0] = _stable_upper_limit(
+                y_upper[0],
+                data["left_pos_error_m"],
+                data["right_pos_error_m"],
+                data["mean_pos_error_m"],
+            )
+            axes[0].set_ylim(0.0, y_upper[0])
 
-            axes[1].plot(steps, data["mean_rot_error_deg"], color="tab:orange")
-            axes[1].set_ylabel("rot error [deg]")
+            axes[1].plot(steps, rotation_error_rad, color="tab:orange")
+            axes[1].set_ylabel("rot error [rad]")
+            y_upper[1] = _stable_upper_limit(y_upper[1], rotation_error_rad)
+            axes[1].set_ylim(0.0, y_upper[1])
 
-            axes[2].plot(steps, data["mean_lin_vel_error_mps"], label="lin [m/s]")
-            axes[2].plot(steps, data["mean_ang_vel_error_radps"], label="ang [rad/s]")
-            axes[2].set_ylabel("vel error")
-            axes[2].set_xlabel("play step")
-            axes[2].legend(loc="upper right")
+            axes[2].plot(steps, data["mean_lin_vel_error_mps"], color="tab:blue")
+            axes[2].set_ylabel("lin vel error [m/s]")
+            y_upper[2] = _stable_upper_limit(
+                y_upper[2],
+                data["mean_lin_vel_error_mps"],
+            )
+            axes[2].set_ylim(0.0, y_upper[2])
+
+            axes[3].plot(steps, data["mean_ang_vel_error_radps"], color="tab:orange")
+            axes[3].set_ylabel("ang vel error [rad/s]")
+            y_upper[3] = _stable_upper_limit(
+                y_upper[3],
+                data["mean_ang_vel_error_radps"],
+            )
+            axes[3].set_ylim(0.0, y_upper[3])
+
+            axes[4].plot(steps, data["mean_virtual_force_error_n"], label="tracking")
+            axes[4].plot(steps, data["mean_force_estimator_error_n"], label="estimator")
+            axes[4].set_ylabel("force error [N]")
+            axes[4].set_xlabel("play step")
+            axes[4].legend(loc="upper right")
+            y_upper[4] = _stable_upper_limit(
+                y_upper[4],
+                data["mean_virtual_force_error_n"],
+                data["mean_force_estimator_error_n"],
+            )
+            axes[4].set_ylim(0.0, y_upper[4])
 
             fig.tight_layout()
             fig.canvas.draw_idle()

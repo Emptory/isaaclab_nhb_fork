@@ -185,9 +185,44 @@ class RslRlPpoActorCriticResidualCfg(RslRlPpoActorCriticCfg):
     class_name: str = "ActorCriticResidual"
     base_policy_checkpoint: str = ""
     base_policy_obs_group: str = "base_policy"
-    residual_scale: float = 0.1
+    residual_scale: float | list[float] = 0.1
     base_actor_hidden_dims: list[int] = [512, 256, 128]
     base_critic_hidden_dims: list[int] = [512, 256, 128]
     base_activation: str = "elu"
     base_actor_obs_normalization: bool = True
     base_critic_obs_normalization: bool = True
+    append_base_action: bool = True
+    """Append the current active frozen-base action to the residual actor input."""
+
+    force_estimator_obs_group: str = ""
+    """Observation group used by the deployable virtual-force estimator."""
+
+    force_estimator_target_group: str = ""
+    """Privileged observation group containing estimator supervision."""
+
+    force_estimator_hidden_dims: list[int] = [128, 64]
+    """Hidden layers of the virtual-force estimator."""
+
+    force_estimator_scale: float = 1.0
+    """Fixed newton scale used for estimator targets and actor features."""
+
+    force_estimator_loss_coef: float = 1.0
+    """Smooth-L1 estimator loss coefficient added to PPO."""
+
+    force_estimator_smooth_l1_beta: float = 0.1
+    """Smooth-L1 transition width after force scaling."""
+
+    force_physics_contract: dict = MISSING
+    """Virtual-spring physics/sign/anchor contract included in checkpoint fingerprint."""
+
+    defer_base_policy_load: bool = False
+    """Build the base modules but let a self-contained S2 checkpoint populate them."""
+
+    policy_schema_version: int = 3
+    """Semantic version of the residual policy/checkpoint contract."""
+
+    observation_schema: str = MISSING
+    """Stable name for observation ordering and frame conventions."""
+
+    action_names: list[str] = MISSING
+    """Action/joint order used to fingerprint the checkpoint contract."""
