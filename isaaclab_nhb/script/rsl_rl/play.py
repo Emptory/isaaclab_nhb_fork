@@ -112,6 +112,15 @@ parser.add_argument(
     ),
 )
 parser.add_argument(
+    "--plot_policy_features",
+    action="store_true",
+    default=False,
+    help=(
+        "Record the trajectory-related inputs consumed by the S2 residual actor "
+        "and export only the three dedicated policy-feature figures."
+    ),
+)
+parser.add_argument(
     "--hand_reference_csv",
     type=str,
     default=None,
@@ -343,6 +352,17 @@ import isaaclab_tasks.manager_based.locomotion.velocity.mdp as mdp
 # PLACEHOLDER: Extension template (do not remove this comment)
 
 from isaaclab_nhb.script.rsl_rl.data_logger import DataLogger
+from isaaclab_nhb.script.rsl_rl.policy_feature_plotter import (
+    APPENDED_BASE_ACTION_COLUMNS,
+    BASE_COMMAND_COLUMNS,
+    ERROR_HISTORY_COLUMNS,
+    ESTIMATED_FORCE_COLUMNS,
+    FORCE_CONTROL_AXIS_COLUMNS,
+    GAIT_COLUMNS,
+    REFERENCE_COLUMNS,
+    TARGET_FORCE_COLUMNS,
+    policy_feature_header,
+)
 
 
 HAND_KINEMATIC_ERROR_KEYS = (
@@ -419,7 +439,7 @@ def _hand_error_plot_upper_limit(
     return math.ceil(required / minimum_span) * minimum_span
 
 
-def _save_hand_reference_error_plot(csv_path: str) -> str | None:
+def _save_hand_reference_error_plot(csv_path: str, output_path: str | None = None) -> str | None:
     if not csv_path or not os.path.isfile(csv_path):
         return None
 
@@ -443,7 +463,7 @@ def _save_hand_reference_error_plot(csv_path: str) -> str | None:
         print(f"[WARNING] Failed to import matplotlib for hand-reference plot export: {err}")
         return None
 
-    output_path = os.path.splitext(csv_path)[0] + ".png"
+    output_path = output_path or os.path.splitext(csv_path)[0] + ".png"
     fig, axes = plt.subplots(5, 1, figsize=(9, 11), sharex=True)
     rotation_error_rad = [
         math.radians(value) for value in data["mean_rot_error_deg"]
@@ -509,7 +529,7 @@ class HandReferenceErrorMonitor:
     def __init__(
         self,
         env,
-        log_dir: str,
+        evidence_dir: str,
         enable_error_plot: bool = False,
         enable_trajectory_plot: bool = False,
         enable_csv: bool = False,
@@ -517,6 +537,7 @@ class HandReferenceErrorMonitor:
         window: int = 500,
         print_interval: int = 50,
         metadata: dict | None = None,
+        timestamp: str | None = None,
     ):
         self.env = env
         self.unwrapped = env.unwrapped
@@ -536,6 +557,9 @@ class HandReferenceErrorMonitor:
         self.metadata_path = None
         self.episode_summary_path = None
         self.png_path = None
+        self.timestamp = timestamp or time.strftime("%Y%m%d_%H%M%S")
+        self.rawdata_dir = os.path.join(evidence_dir, "rawdata")
+        self.pics_dir = os.path.join(evidence_dir, "pics")
         self.plot_processes = []
         self.episode_summaries = []
         self._reset_episode_accumulator()
@@ -578,10 +602,9 @@ class HandReferenceErrorMonitor:
 
         self.enable_csv = self.enable_csv or self.enable_error_plot or self.enable_trajectory_plot
         if self.enable_csv:
-            csv_dir = os.path.join(log_dir, "play_hand_reference_errors")
-            os.makedirs(csv_dir, exist_ok=True)
-            timestamp = time.strftime("%Y%m%d_%H%M%S")
-            self.csv_path = os.path.join(csv_dir, f"hand_reference_errors_{timestamp}.csv")
+            os.makedirs(self.rawdata_dir, exist_ok=True)
+            os.makedirs(self.pics_dir, exist_ok=True)
+            self.csv_path = os.path.join(self.rawdata_dir, f"tracking_{self.timestamp}.csv")
             self.csv_file = open(self.csv_path, "w", newline="")
             self.csv_writer = csv.writer(self.csv_file)
             tracking_keys = HAND_REFERENCE_TRACKING_KEYS if self.has_tracking_state else ()
@@ -622,16 +645,17 @@ class HandReferenceErrorMonitor:
 
         if self.enable_trajectory_plot:
             plotter_path = os.path.join(os.path.dirname(__file__), "hand_tracking_plotter.py")
-            self.plot_processes.append(subprocess.Popen(
-                [
-                    sys.executable,
-                    plotter_path,
-                    "--csv",
-                    self.csv_path,
-                    "--window",
-                    str(self.window),
-                ]
-            ))
+            plotter_command = [
+                sys.executable,
+                plotter_path,
+                "--csv",
+                self.csv_path,
+                "--window",
+                str(self.window),
+            ]
+            if self.enable_diagnostics:
+                plotter_command.append("--include-diagnostics")
+            self.plot_processes.append(subprocess.Popen(plotter_command))
             print("[INFO] Live world-frame reference-vs-actual hand trajectory plots enabled in a separate process.")
 
     def _reset_episode_accumulator(self) -> None:
@@ -673,6 +697,19 @@ class HandReferenceErrorMonitor:
             keys.extend(f"{hand}_rotation_error_world_{axis}_deg" for axis in "xyz")
             keys.extend(f"{hand}_linear_velocity_error_world_{axis}_mps" for axis in "xyz")
             keys.extend(f"{hand}_angular_velocity_error_world_{axis}_radps" for axis in "xyz")
+        keys.extend(
+            (
+                "gait_frequency_hz",
+                "gait_phase",
+                "gait_sin",
+                "gait_cos",
+                "gait_sin_right",
+                "gait_cos_right",
+                "base_command_x_mps",
+                "base_command_y_mps",
+                "base_command_yaw_radps",
+            )
+        )
         keys.extend(("base_action_l2", "residual_action_l2", "residual_action_max_abs", "total_action_l2"))
         for source in ("base", "residual", "total"):
             keys.extend(f"{source}_action_{name}" for name in self.action_names)
@@ -730,6 +767,50 @@ class HandReferenceErrorMonitor:
             ):
                 for axis, value in zip("xyz", self._tensor_values(tensor[0, hand_index])):
                     values[f"{hand}_{field}_error_world_{axis}_{unit}"] = value
+        return values
+
+    def _command_diagnostic_values(self) -> dict[str, float]:
+        values = {
+            key: float("nan")
+            for key in (
+                "gait_frequency_hz",
+                "gait_phase",
+                "gait_sin",
+                "gait_cos",
+                "gait_sin_right",
+                "gait_cos_right",
+                "base_command_x_mps",
+                "base_command_y_mps",
+                "base_command_yaw_radps",
+            )
+        }
+        try:
+            gait = self.unwrapped.command_manager.get_command("gait_command")[0]
+            gait_values = self._tensor_values(gait)
+            if len(gait_values) >= 7:
+                values.update(
+                    {
+                        "gait_frequency_hz": gait_values[2],
+                        "gait_phase": (math.atan2(gait_values[3], gait_values[4]) / (2.0 * math.pi)) % 1.0,
+                        "gait_sin": gait_values[3],
+                        "gait_cos": gait_values[4],
+                        "gait_sin_right": gait_values[5],
+                        "gait_cos_right": gait_values[6],
+                    }
+                )
+        except (AttributeError, KeyError, RuntimeError, ValueError):
+            pass
+
+        try:
+            base_command = self.unwrapped.command_manager.get_command("base_velocity")[0]
+            base_values = self._tensor_values(base_command)
+            for key, value in zip(
+                ("base_command_x_mps", "base_command_y_mps", "base_command_yaw_radps"),
+                base_values,
+            ):
+                values[key] = value
+        except (AttributeError, KeyError, RuntimeError, ValueError):
+            pass
         return values
 
     def _action_values(
@@ -899,6 +980,7 @@ class HandReferenceErrorMonitor:
                 "state_is_post_reset": int(done),
             }
             diagnostic_values.update(self._body_diagnostic_values())
+            diagnostic_values.update(self._command_diagnostic_values())
             if self.has_tracking_state and not done:
                 diagnostic_values.update(self._hand_error_component_values(state))
             else:
@@ -974,20 +1056,266 @@ class HandReferenceErrorMonitor:
         if self.csv_file is not None:
             self.csv_file.close()
             print(f"[INFO] Hand-reference tracking errors saved to: {self.csv_path}")
-            self.png_path = _save_hand_reference_error_plot(self.csv_path)
-            if self.png_path is not None:
-                print(f"[INFO] Hand-reference tracking plot saved to: {self.png_path}")
+            if self.enable_error_plot:
+                error_plot_path = os.path.join(self.pics_dir, f"tracking_error_{self.timestamp}.png")
+                self.png_path = _save_hand_reference_error_plot(self.csv_path, error_plot_path)
+                if self.png_path is not None:
+                    print(f"[INFO] Hand-reference tracking plot saved to: {self.png_path}")
         for plot_process in self.plot_processes:
             if plot_process.poll() is None:
                 plot_process.terminate()
         if self.enable_trajectory_plot and self.csv_path is not None:
             plotter_path = os.path.join(os.path.dirname(__file__), "hand_tracking_plotter.py")
             result = subprocess.run(
-                [sys.executable, plotter_path, "--csv", self.csv_path, "--save-only"],
+                [
+                    sys.executable,
+                    plotter_path,
+                    "--csv",
+                    self.csv_path,
+                    "--save-only",
+                    "--output-dir",
+                    self.pics_dir,
+                    "--rawdata-dir",
+                    self.rawdata_dir,
+                    "--timestamp",
+                    self.timestamp,
+                ],
                 check=False,
             )
             if result.returncode != 0:
                 print("[WARNING] Failed to export reference-vs-actual hand trajectory plots.")
+
+
+class PolicyFeatureMonitor:
+    """Record the exact action-time trajectory features consumed by the S2 actor."""
+
+    def __init__(
+        self,
+        env,
+        policy_module,
+        evidence_dir: str,
+        metadata: dict | None = None,
+        timestamp: str | None = None,
+    ) -> None:
+        self.env = env.unwrapped
+        self.policy_module = policy_module
+        self.timestamp = timestamp or time.strftime("%Y%m%d_%H%M%S")
+        self.rawdata_dir = os.path.join(evidence_dir, "rawdata")
+        self.pics_dir = os.path.join(evidence_dir, "pics")
+        os.makedirs(self.rawdata_dir, exist_ok=True)
+        os.makedirs(self.pics_dir, exist_ok=True)
+
+        self.residual_slices = self._observation_term_slices("residual_policy")
+        self.force_context_slices = self._observation_term_slices("force_context")
+        self._validate_term_dim(self.residual_slices, "hand_reference", 26)
+        self._validate_term_dim(self.residual_slices, "hand_reference_error", 120)
+        self._validate_term_dim(self.residual_slices, "velocity_commands", 3)
+        self._validate_term_dim(self.residual_slices, "gait_commands", 7)
+        self._validate_term_dim(self.force_context_slices, "target_virtual_force", 6)
+        self._validate_term_dim(self.force_context_slices, "force_control_axes", 6)
+
+        required_policy_methods = ("_compute_base_action", "_actor_input")
+        missing_methods = [
+            method for method in required_policy_methods if not callable(getattr(policy_module, method, None))
+        ]
+        if missing_methods:
+            raise RuntimeError(
+                "--plot_policy_features requires ActorCriticResidual methods "
+                f"{required_policy_methods}; missing {missing_methods}."
+            )
+        active_action_indices = getattr(policy_module, "active_action_indices", None)
+        if active_action_indices is None or int(active_action_indices.numel()) != len(APPENDED_BASE_ACTION_COLUMNS):
+            raise RuntimeError(
+                "S2 appended base-action layout mismatch: expected "
+                f"{len(APPENDED_BASE_ACTION_COLUMNS)} active arm actions."
+            )
+        self.active_action_indices = active_action_indices
+        self.actor_input_dim = int(getattr(policy_module, "num_residual_actor_obs", 0))
+        if self.actor_input_dim <= 0:
+            raise RuntimeError("S2 policy does not expose a positive num_residual_actor_obs.")
+
+        self.csv_path = os.path.join(self.rawdata_dir, f"policy_features_{self.timestamp}.csv")
+        self.metadata_path = os.path.join(
+            self.rawdata_dir, f"policy_features_{self.timestamp}_metadata.json"
+        )
+        self.csv_file = open(self.csv_path, "w", newline="")
+        self.csv_writer = csv.writer(self.csv_file)
+        self.csv_writer.writerow(policy_feature_header(self.actor_input_dim))
+        self.step_count = 0
+        self.episode_id = 0
+
+        diagnostic_metadata = dict(metadata or {})
+        diagnostic_metadata.update(
+            {
+                "sample_semantics": "pre-action observation obs_t used to compute action_t",
+                "coordinate_frame": "current torso_link frame",
+                "step_dt_s": float(self.env.step_dt),
+                "trajectory_preview_steps": int(
+                    getattr(self.env.cfg.commands.hand_reference, "preview_steps", 0)
+                ),
+                "history_order_in_csv": ["lag4", "lag3", "lag2", "lag1", "lag0"],
+                "history_semantics": "oldest to newest; lag0 is the current observation",
+                "orientation_reference_storage": "scalar-first quaternion wxyz",
+                "orientation_error_storage": "target-minus-actual axis-angle vector in radians",
+                "actual_virtual_force_is_policy_input": False,
+                "actor_input_dim": self.actor_input_dim,
+                "actor_input_layout": {
+                    "normalized_control_features": [
+                        0,
+                        int(getattr(policy_module, "num_residual_control_obs", 0)),
+                    ],
+                    "estimated_virtual_force_scaled": [
+                        int(getattr(policy_module, "num_residual_control_obs", 0)),
+                        self.actor_input_dim,
+                    ],
+                },
+                "force_estimator_scale": float(getattr(policy_module, "force_estimator_scale", 1.0)),
+                "policy_schema_version": int(
+                    getattr(policy_module, "policy_schema_version", torch.tensor(-1)).item()
+                ),
+                "observation_schema": str(getattr(policy_module, "observation_schema", "unknown")),
+                "observation_terms": {
+                    group_name: [
+                        {"name": name, "shape": [int(dimension) for dimension in shape]}
+                        for name, shape in zip(
+                            self.env.observation_manager.active_terms[group_name],
+                            self.env.observation_manager.group_obs_term_dim[group_name],
+                        )
+                    ]
+                    for group_name in ("residual_policy", "force_context")
+                },
+                "semantic_columns": {
+                    "reference": list(REFERENCE_COLUMNS),
+                    "error_history": list(ERROR_HISTORY_COLUMNS),
+                    "target_virtual_force": list(TARGET_FORCE_COLUMNS),
+                    "force_control_axes": list(FORCE_CONTROL_AXIS_COLUMNS),
+                    "gait": list(GAIT_COLUMNS),
+                    "base_command": list(BASE_COMMAND_COLUMNS),
+                    "estimated_virtual_force": list(ESTIMATED_FORCE_COLUMNS),
+                    "appended_base_action": list(APPENDED_BASE_ACTION_COLUMNS),
+                },
+            }
+        )
+        with open(self.metadata_path, "w") as metadata_file:
+            json.dump(diagnostic_metadata, metadata_file, indent=2, ensure_ascii=False)
+        print(f"[INFO] Saving exact S2 policy trajectory features to: {self.csv_path}")
+        print(f"[INFO] Saving S2 policy-feature metadata to: {self.metadata_path}")
+
+    def _observation_term_slices(self, group_name: str) -> dict[str, slice]:
+        manager = self.env.observation_manager
+        if group_name not in manager.active_terms:
+            raise RuntimeError(
+                f"S2 observation group '{group_name}' is missing; available groups: "
+                f"{list(manager.active_terms)}"
+            )
+        names = manager.active_terms[group_name]
+        dimensions = manager.group_obs_term_dim[group_name]
+        offset = 0
+        slices = {}
+        for name, dimension in zip(names, dimensions):
+            size = math.prod(dimension)
+            slices[name] = slice(offset, offset + size)
+            offset += size
+        return slices
+
+    @staticmethod
+    def _validate_term_dim(slices: dict[str, slice], term_name: str, expected_dim: int) -> None:
+        term_slice = slices.get(term_name)
+        if term_slice is None:
+            raise RuntimeError(f"Required S2 policy observation term is missing: {term_name}")
+        actual_dim = term_slice.stop - term_slice.start
+        if actual_dim != expected_dim:
+            raise RuntimeError(
+                f"S2 policy term '{term_name}' has {actual_dim} dimensions; expected {expected_dim}."
+            )
+
+    @staticmethod
+    def _values(tensor: torch.Tensor) -> list[float]:
+        return tensor.detach().reshape(-1).cpu().tolist()
+
+    def record(self, obs, time_s: float) -> None:
+        if "residual_policy" not in obs or "force_context" not in obs:
+            raise RuntimeError(
+                "Policy observation is missing residual_policy or force_context; "
+                f"available groups: {list(obs.keys())}"
+            )
+        residual_obs = obs["residual_policy"][0]
+        force_context = obs["force_context"][0]
+
+        reference = residual_obs[self.residual_slices["hand_reference"]]
+        error_history = residual_obs[self.residual_slices["hand_reference_error"]]
+        gait = residual_obs[self.residual_slices["gait_commands"]]
+        base_command = residual_obs[self.residual_slices["velocity_commands"]]
+        target_force = force_context[self.force_context_slices["target_virtual_force"]]
+        force_control_axes = force_context[self.force_context_slices["force_control_axes"]]
+
+        base_action = self.policy_module._compute_base_action(obs)
+        actor_input, estimated_force_scaled = self.policy_module._actor_input(obs, base_action)
+        appended_base_action = torch.index_select(
+            base_action,
+            dim=-1,
+            index=self.active_action_indices,
+        )[0]
+        estimated_force = estimated_force_scaled[0] * float(
+            getattr(self.policy_module, "force_estimator_scale", 1.0)
+        )
+        if actor_input.shape[-1] != self.actor_input_dim:
+            raise RuntimeError(
+                f"S2 actor input has {actor_input.shape[-1]} dimensions; expected {self.actor_input_dim}."
+            )
+
+        episode_step = int(self.env.episode_length_buf[0].detach().cpu())
+        row = (
+            self.step_count,
+            float(time_s),
+            self.episode_id,
+            episode_step,
+            *self._values(reference),
+            *self._values(error_history),
+            *self._values(target_force),
+            *self._values(force_control_axes),
+            *self._values(gait),
+            *self._values(base_command),
+            *self._values(estimated_force),
+            *self._values(appended_base_action),
+            *self._values(actor_input[0]),
+        )
+        expected_columns = len(policy_feature_header(self.actor_input_dim))
+        if len(row) != expected_columns:
+            raise RuntimeError(
+                f"Policy-feature row contains {len(row)} values; expected {expected_columns}."
+            )
+        self.csv_writer.writerow(row)
+        self.step_count += 1
+
+    def after_step(self, done: bool) -> None:
+        if done:
+            self.episode_id += 1
+
+    def close(self) -> None:
+        if self.csv_file is None:
+            return
+        self.csv_file.close()
+        self.csv_file = None
+        print(f"[INFO] S2 policy trajectory features saved to: {self.csv_path}")
+        plotter_path = os.path.join(os.path.dirname(__file__), "policy_feature_plotter.py")
+        result = subprocess.run(
+            [
+                sys.executable,
+                plotter_path,
+                "--csv",
+                self.csv_path,
+                "--output-dir",
+                self.pics_dir,
+                "--rawdata-dir",
+                self.rawdata_dir,
+                "--timestamp",
+                self.timestamp,
+            ],
+            check=False,
+        )
+        if result.returncode != 0:
+            raise RuntimeError("Failed to export the three S2 policy-feature plots.")
 
 
 def _make_hand_path_marker(
@@ -1412,7 +1740,7 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
             }
             hand_error_monitor = HandReferenceErrorMonitor(
                 env=env,
-                log_dir=log_dir,
+                evidence_dir=_project_path("evidence"),
                 enable_error_plot=args_cli.plot_hand_reference_errors,
                 enable_trajectory_plot=args_cli.plot_hand_reference_trajectory,
                 enable_csv=args_cli.hand_error_csv,
@@ -1471,6 +1799,26 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
 
     # reset environment
     obs = env.get_observations()
+    policy_feature_monitor = None
+    if args_cli.plot_policy_features:
+        policy_feature_monitor = PolicyFeatureMonitor(
+            env=env,
+            policy_module=policy_module,
+            evidence_dir=_project_path("evidence"),
+            metadata={
+                "task": args_cli.task,
+                "checkpoint": resume_path,
+                "device": str(env.unwrapped.device),
+                "seed": agent_cfg.seed,
+                "num_envs": env.unwrapped.num_envs,
+                "deterministic_eval": args_cli.deterministic_eval,
+                "hand_reference_csv": getattr(
+                    env.unwrapped.cfg.commands.hand_reference,
+                    "data_path",
+                    None,
+                ),
+            },
+        )
     timestep = 0
     
     # determine if we need to track timesteps for limiting recording/playback
@@ -1502,6 +1850,8 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         start_time = time.time()
         # run everything in inference mode
         with torch.inference_mode():
+            if policy_feature_monitor is not None:
+                policy_feature_monitor.record(obs, timestep * dt)
             # agent stepping
             actions, extra_info = policy(obs)
             base_action = getattr(policy_module, "last_base_action", None)
@@ -1529,6 +1879,8 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
                 else:
                     time_out = bool(time_out_value)
             terminated = done and not time_out
+            if policy_feature_monitor is not None:
+                policy_feature_monitor.after_step(done)
             termination_reason = ""
             if done:
                 active_reasons = [
@@ -1604,6 +1956,8 @@ def main(env_cfg: ManagerBasedRLEnvCfg | DirectRLEnvCfg | DirectMARLEnvCfg, agen
         datalogger.close()
     if hand_error_monitor is not None:
         hand_error_monitor.close()
+    if policy_feature_monitor is not None:
+        policy_feature_monitor.close()
     env.close()
 
 

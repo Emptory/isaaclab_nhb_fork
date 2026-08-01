@@ -1,0 +1,322 @@
+{
+  "task": "CoopG1S2-29dof-Residual-BaseVelocity530",
+  "checkpoint": "/home/zhaowenhao/git/isaaclab_nhb/isaaclab_nhb/logs/rsl_rl/coopG1S2/2026-07-27_09-13-12_residual_s1_force_v5_antisway_finetune_8k_3k/model_19999.pt",
+  "device": "cuda:6",
+  "seed": 42,
+  "num_envs": 1,
+  "deterministic_eval": true,
+  "hand_reference_csv": "/home/zhaowenhao/git/isaaclab_nhb/isaaclab_nhb/stimulationData/box_6dof_two_hand_19x2.csv",
+  "sample_semantics": "pre-action observation obs_t used to compute action_t",
+  "coordinate_frame": "current torso_link frame",
+  "step_dt_s": 0.02,
+  "trajectory_preview_steps": 0,
+  "history_order_in_csv": [
+    "lag4",
+    "lag3",
+    "lag2",
+    "lag1",
+    "lag0"
+  ],
+  "history_semantics": "oldest to newest; lag0 is the current observation",
+  "orientation_reference_storage": "scalar-first quaternion wxyz",
+  "orientation_error_storage": "target-minus-actual axis-angle vector in radians",
+  "actual_virtual_force_is_policy_input": false,
+  "actor_input_dim": 239,
+  "actor_input_layout": {
+    "normalized_control_features": [
+      0,
+      233
+    ],
+    "estimated_virtual_force_scaled": [
+      233,
+      239
+    ]
+  },
+  "force_estimator_scale": 1.0,
+  "policy_schema_version": 5,
+  "observation_schema": "coopG1S2_force_v5_world-spring_torso-policy_residual207_force-context12_control233_est6_actor239_critic868_force-Lxyz-Rxyz-env-on-hand",
+  "observation_terms": {
+    "residual_policy": [
+      {
+        "name": "hand_reference",
+        "shape": [
+          26
+        ]
+      },
+      {
+        "name": "hand_reference_error",
+        "shape": [
+          120
+        ]
+      },
+      {
+        "name": "upper_joint_pos",
+        "shape": [
+          14
+        ]
+      },
+      {
+        "name": "upper_joint_vel",
+        "shape": [
+          14
+        ]
+      },
+      {
+        "name": "projected_gravity",
+        "shape": [
+          3
+        ]
+      },
+      {
+        "name": "base_lin_vel",
+        "shape": [
+          3
+        ]
+      },
+      {
+        "name": "base_ang_vel",
+        "shape": [
+          3
+        ]
+      },
+      {
+        "name": "velocity_commands",
+        "shape": [
+          3
+        ]
+      },
+      {
+        "name": "gait_commands",
+        "shape": [
+          7
+        ]
+      },
+      {
+        "name": "previous_residual",
+        "shape": [
+          14
+        ]
+      }
+    ],
+    "force_context": [
+      {
+        "name": "target_virtual_force",
+        "shape": [
+          6
+        ]
+      },
+      {
+        "name": "force_control_axes",
+        "shape": [
+          6
+        ]
+      }
+    ]
+  },
+  "semantic_columns": {
+    "reference": [
+      "left_reference_position_x_m",
+      "left_reference_position_y_m",
+      "left_reference_position_z_m",
+      "left_reference_quaternion_w",
+      "left_reference_quaternion_x",
+      "left_reference_quaternion_y",
+      "left_reference_quaternion_z",
+      "left_reference_linear_velocity_x_mps",
+      "left_reference_linear_velocity_y_mps",
+      "left_reference_linear_velocity_z_mps",
+      "left_reference_angular_velocity_x_radps",
+      "left_reference_angular_velocity_y_radps",
+      "left_reference_angular_velocity_z_radps",
+      "right_reference_position_x_m",
+      "right_reference_position_y_m",
+      "right_reference_position_z_m",
+      "right_reference_quaternion_w",
+      "right_reference_quaternion_x",
+      "right_reference_quaternion_y",
+      "right_reference_quaternion_z",
+      "right_reference_linear_velocity_x_mps",
+      "right_reference_linear_velocity_y_mps",
+      "right_reference_linear_velocity_z_mps",
+      "right_reference_angular_velocity_x_radps",
+      "right_reference_angular_velocity_y_radps",
+      "right_reference_angular_velocity_z_radps"
+    ],
+    "error_history": [
+      "left_position_error_lag4_x_m",
+      "left_position_error_lag4_y_m",
+      "left_position_error_lag4_z_m",
+      "left_orientation_error_lag4_x_rad",
+      "left_orientation_error_lag4_y_rad",
+      "left_orientation_error_lag4_z_rad",
+      "left_linear_velocity_error_lag4_x_mps",
+      "left_linear_velocity_error_lag4_y_mps",
+      "left_linear_velocity_error_lag4_z_mps",
+      "left_angular_velocity_error_lag4_x_radps",
+      "left_angular_velocity_error_lag4_y_radps",
+      "left_angular_velocity_error_lag4_z_radps",
+      "right_position_error_lag4_x_m",
+      "right_position_error_lag4_y_m",
+      "right_position_error_lag4_z_m",
+      "right_orientation_error_lag4_x_rad",
+      "right_orientation_error_lag4_y_rad",
+      "right_orientation_error_lag4_z_rad",
+      "right_linear_velocity_error_lag4_x_mps",
+      "right_linear_velocity_error_lag4_y_mps",
+      "right_linear_velocity_error_lag4_z_mps",
+      "right_angular_velocity_error_lag4_x_radps",
+      "right_angular_velocity_error_lag4_y_radps",
+      "right_angular_velocity_error_lag4_z_radps",
+      "left_position_error_lag3_x_m",
+      "left_position_error_lag3_y_m",
+      "left_position_error_lag3_z_m",
+      "left_orientation_error_lag3_x_rad",
+      "left_orientation_error_lag3_y_rad",
+      "left_orientation_error_lag3_z_rad",
+      "left_linear_velocity_error_lag3_x_mps",
+      "left_linear_velocity_error_lag3_y_mps",
+      "left_linear_velocity_error_lag3_z_mps",
+      "left_angular_velocity_error_lag3_x_radps",
+      "left_angular_velocity_error_lag3_y_radps",
+      "left_angular_velocity_error_lag3_z_radps",
+      "right_position_error_lag3_x_m",
+      "right_position_error_lag3_y_m",
+      "right_position_error_lag3_z_m",
+      "right_orientation_error_lag3_x_rad",
+      "right_orientation_error_lag3_y_rad",
+      "right_orientation_error_lag3_z_rad",
+      "right_linear_velocity_error_lag3_x_mps",
+      "right_linear_velocity_error_lag3_y_mps",
+      "right_linear_velocity_error_lag3_z_mps",
+      "right_angular_velocity_error_lag3_x_radps",
+      "right_angular_velocity_error_lag3_y_radps",
+      "right_angular_velocity_error_lag3_z_radps",
+      "left_position_error_lag2_x_m",
+      "left_position_error_lag2_y_m",
+      "left_position_error_lag2_z_m",
+      "left_orientation_error_lag2_x_rad",
+      "left_orientation_error_lag2_y_rad",
+      "left_orientation_error_lag2_z_rad",
+      "left_linear_velocity_error_lag2_x_mps",
+      "left_linear_velocity_error_lag2_y_mps",
+      "left_linear_velocity_error_lag2_z_mps",
+      "left_angular_velocity_error_lag2_x_radps",
+      "left_angular_velocity_error_lag2_y_radps",
+      "left_angular_velocity_error_lag2_z_radps",
+      "right_position_error_lag2_x_m",
+      "right_position_error_lag2_y_m",
+      "right_position_error_lag2_z_m",
+      "right_orientation_error_lag2_x_rad",
+      "right_orientation_error_lag2_y_rad",
+      "right_orientation_error_lag2_z_rad",
+      "right_linear_velocity_error_lag2_x_mps",
+      "right_linear_velocity_error_lag2_y_mps",
+      "right_linear_velocity_error_lag2_z_mps",
+      "right_angular_velocity_error_lag2_x_radps",
+      "right_angular_velocity_error_lag2_y_radps",
+      "right_angular_velocity_error_lag2_z_radps",
+      "left_position_error_lag1_x_m",
+      "left_position_error_lag1_y_m",
+      "left_position_error_lag1_z_m",
+      "left_orientation_error_lag1_x_rad",
+      "left_orientation_error_lag1_y_rad",
+      "left_orientation_error_lag1_z_rad",
+      "left_linear_velocity_error_lag1_x_mps",
+      "left_linear_velocity_error_lag1_y_mps",
+      "left_linear_velocity_error_lag1_z_mps",
+      "left_angular_velocity_error_lag1_x_radps",
+      "left_angular_velocity_error_lag1_y_radps",
+      "left_angular_velocity_error_lag1_z_radps",
+      "right_position_error_lag1_x_m",
+      "right_position_error_lag1_y_m",
+      "right_position_error_lag1_z_m",
+      "right_orientation_error_lag1_x_rad",
+      "right_orientation_error_lag1_y_rad",
+      "right_orientation_error_lag1_z_rad",
+      "right_linear_velocity_error_lag1_x_mps",
+      "right_linear_velocity_error_lag1_y_mps",
+      "right_linear_velocity_error_lag1_z_mps",
+      "right_angular_velocity_error_lag1_x_radps",
+      "right_angular_velocity_error_lag1_y_radps",
+      "right_angular_velocity_error_lag1_z_radps",
+      "left_position_error_lag0_x_m",
+      "left_position_error_lag0_y_m",
+      "left_position_error_lag0_z_m",
+      "left_orientation_error_lag0_x_rad",
+      "left_orientation_error_lag0_y_rad",
+      "left_orientation_error_lag0_z_rad",
+      "left_linear_velocity_error_lag0_x_mps",
+      "left_linear_velocity_error_lag0_y_mps",
+      "left_linear_velocity_error_lag0_z_mps",
+      "left_angular_velocity_error_lag0_x_radps",
+      "left_angular_velocity_error_lag0_y_radps",
+      "left_angular_velocity_error_lag0_z_radps",
+      "right_position_error_lag0_x_m",
+      "right_position_error_lag0_y_m",
+      "right_position_error_lag0_z_m",
+      "right_orientation_error_lag0_x_rad",
+      "right_orientation_error_lag0_y_rad",
+      "right_orientation_error_lag0_z_rad",
+      "right_linear_velocity_error_lag0_x_mps",
+      "right_linear_velocity_error_lag0_y_mps",
+      "right_linear_velocity_error_lag0_z_mps",
+      "right_angular_velocity_error_lag0_x_radps",
+      "right_angular_velocity_error_lag0_y_radps",
+      "right_angular_velocity_error_lag0_z_radps"
+    ],
+    "target_virtual_force": [
+      "left_target_virtual_force_x_n",
+      "left_target_virtual_force_y_n",
+      "left_target_virtual_force_z_n",
+      "right_target_virtual_force_x_n",
+      "right_target_virtual_force_y_n",
+      "right_target_virtual_force_z_n"
+    ],
+    "force_control_axes": [
+      "left_force_control_axis_x",
+      "left_force_control_axis_y",
+      "left_force_control_axis_z",
+      "right_force_control_axis_x",
+      "right_force_control_axis_y",
+      "right_force_control_axis_z"
+    ],
+    "gait": [
+      "gait_stance_rate",
+      "gait_bipedal_offset",
+      "gait_frequency_hz",
+      "gait_sin_left",
+      "gait_cos_left",
+      "gait_sin_right",
+      "gait_cos_right"
+    ],
+    "base_command": [
+      "base_command_x_mps",
+      "base_command_y_mps",
+      "base_command_yaw_radps"
+    ],
+    "estimated_virtual_force": [
+      "left_estimated_virtual_force_x_n",
+      "left_estimated_virtual_force_y_n",
+      "left_estimated_virtual_force_z_n",
+      "right_estimated_virtual_force_x_n",
+      "right_estimated_virtual_force_y_n",
+      "right_estimated_virtual_force_z_n"
+    ],
+    "appended_base_action": [
+      "appended_base_action_left_shoulder_pitch_joint",
+      "appended_base_action_left_shoulder_roll_joint",
+      "appended_base_action_left_shoulder_yaw_joint",
+      "appended_base_action_left_elbow_joint",
+      "appended_base_action_left_wrist_roll_joint",
+      "appended_base_action_left_wrist_pitch_joint",
+      "appended_base_action_left_wrist_yaw_joint",
+      "appended_base_action_right_shoulder_pitch_joint",
+      "appended_base_action_right_shoulder_roll_joint",
+      "appended_base_action_right_shoulder_yaw_joint",
+      "appended_base_action_right_elbow_joint",
+      "appended_base_action_right_wrist_roll_joint",
+      "appended_base_action_right_wrist_pitch_joint",
+      "appended_base_action_right_wrist_yaw_joint"
+    ]
+  }
+}
